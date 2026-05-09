@@ -6,6 +6,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private float crossFadeTime = 0.12f;
     [SerializeField] private bool showHud = true;
+    [SerializeField] private int currentStateIndex;
 
     private readonly string[] stateNames =
     {
@@ -62,9 +63,30 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             if (Keyboard.current != null && Keyboard.current[keys[i]].wasPressedThisFrame)
             {
-                PlayState(stateNames[i]);
+                PlayState(i);
             }
         }
+
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (Keyboard.current.tabKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.rightArrowKey.wasPressedThisFrame)
+        {
+            PlayState((currentStateIndex + 1) % stateNames.Length);
+        }
+
+        if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
+        {
+            PlayState((currentStateIndex - 1 + stateNames.Length) % stateNames.Length);
+        }
+    }
+
+    private void PlayState(int index)
+    {
+        currentStateIndex = Mathf.Clamp(index, 0, stateNames.Length - 1);
+        PlayState(stateNames[currentStateIndex]);
     }
 
     private void PlayState(string stateName)
@@ -92,7 +114,8 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         }
 
         GUI.Label(new Rect(24f, 24f, 520f, 24f), "Nightfall Animation Sandbox");
-        GUI.Label(new Rect(24f, 48f, 520f, 24f), "1 Idle | 2 Walk | 3 Run | 4 Sprint | 5 Jump | 6 Aim | 7 Slide | 8 Attack | 9 Ability | 0 Roll");
-        GUI.Label(new Rect(24f, 72f, 520f, 24f), "Current: " + currentState);
+        GUI.Label(new Rect(24f, 48f, 780f, 24f), "1 Idle | 2 Walk | 3 Run | 4 Sprint | 5 Jump | 6 Aim | 7 Slide | 8 Attack | 9 Ability | 0 Roll");
+        GUI.Label(new Rect(24f, 72f, 780f, 24f), "Tab / Space / Right Arrow next | Left Arrow previous");
+        GUI.Label(new Rect(24f, 96f, 520f, 24f), "Current: " + currentState);
     }
 }
