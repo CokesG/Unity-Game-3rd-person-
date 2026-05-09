@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(ThirdPersonMotor))]
@@ -13,6 +14,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float movementDampTime = 0.08f;
     [SerializeField] private float locomotionCrossFadeTime = 0.12f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
+    [SerializeField] private bool driveAnimatorStateMachine;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -25,6 +27,8 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool currentIsSprinting;
     [SerializeField] private bool currentIsJumping;
     [SerializeField] private bool currentIsFalling;
+    [SerializeField] private bool currentIsCrouching;
+    [SerializeField] private bool currentIsSliding;
 
     private ThirdPersonMotor motor;
     private PlayerInputHandler input;
@@ -38,16 +42,26 @@ public class PlayerAnimationController : MonoBehaviour
     private int isAimingHash;
     private int isJumpingHash;
     private int isFallingHash;
+    private int isCrouchingHash;
+    private int isSlidingHash;
     private int verticalVelocityHash;
     private int jumpHash;
     private int landHash;
+    private int primaryAttackHash;
+    private int abilityPrimaryHash;
+    private int abilitySecondaryHash;
+    private int ultimateHash;
+    private int slideHash;
 
     private const string IdleState = "Base Layer.Idle";
     private const string WalkState = "Base Layer.Walk";
+    private const string RunState = "Base Layer.Run/Jog";
     private const string SprintState = "Base Layer.Sprint";
     private const string JumpState = "Base Layer.Jump Start";
 
     private string currentAnimatorStatePath;
+    private readonly HashSet<int> availableParameterHashes = new HashSet<int>();
+    private RuntimeAnimatorController cachedController;
 
     private void Awake()
     {
@@ -72,13 +86,21 @@ public class PlayerAnimationController : MonoBehaviour
         isAimingHash = Animator.StringToHash("IsAiming");
         isJumpingHash = Animator.StringToHash("IsJumping");
         isFallingHash = Animator.StringToHash("IsFalling");
+        isCrouchingHash = Animator.StringToHash("IsCrouching");
+        isSlidingHash = Animator.StringToHash("IsSliding");
         verticalVelocityHash = Animator.StringToHash("VerticalVelocity");
         jumpHash = Animator.StringToHash("Jump");
         landHash = Animator.StringToHash("Land");
+        primaryAttackHash = Animator.StringToHash("PrimaryAttack");
+        abilityPrimaryHash = Animator.StringToHash("AbilityPrimary");
+        abilitySecondaryHash = Animator.StringToHash("AbilitySecondary");
+        ultimateHash = Animator.StringToHash("Ultimate");
+        slideHash = Animator.StringToHash("Slide");
 
         if (animator != null)
         {
             animator.applyRootMotion = false;
+            CacheAnimatorParameters();
         }
     }
 
@@ -96,6 +118,8 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsSprinting = motor.IsSprinting();
         currentIsJumping = motor.IsJumping();
         currentIsFalling = motor.IsFalling();
+        currentIsCrouching = motor.IsCrouching();
+        currentIsSliding = motor.IsSliding();
         currentMovementState = ResolveMovementState();
 
         if (!animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
@@ -103,37 +127,44 @@ public class PlayerAnimationController : MonoBehaviour
             return;
         }
 
-        animator.SetFloat(speedHash, currentSpeed, speedDampTime, Time.deltaTime);
-        animator.SetFloat(movementXHash, currentMovementX, movementDampTime, Time.deltaTime);
-        animator.SetFloat(movementYHash, currentMovementY, movementDampTime, Time.deltaTime);
-        animator.SetFloat(verticalVelocityHash, currentVerticalVelocity);
+        CacheAnimatorParameters();
+
+        SetFloatIfAvailable(speedHash, currentSpeed, speedDampTime);
+        SetFloatIfAvailable(movementXHash, currentMovementX, movementDampTime);
+        SetFloatIfAvailable(movementYHash, currentMovementY, movementDampTime);
+        SetFloatIfAvailable(verticalVelocityHash, currentVerticalVelocity);
         
-        animator.SetBool(isGroundedHash, currentIsGrounded);
-        animator.SetBool(isSprintingHash, currentIsSprinting);
-        animator.SetBool(isAimingHash, currentIsAiming);
-        animator.SetBool(isJumpingHash, currentIsJumping);
-        animator.SetBool(isFallingHash, currentIsFalling);
+        SetBoolIfAvailable(isGroundedHash, currentIsGrounded);
+        SetBoolIfAvailable(isSprintingHash, currentIsSprinting);
+        SetBoolIfAvailable(isAimingHash, currentIsAiming);
+        SetBoolIfAvailable(isJumpingHash, currentIsJumping);
+        SetBoolIfAvailable(isFallingHash, currentIsFalling);
+        SetBoolIfAvailable(isCrouchingHash, currentIsCrouching);
+        SetBoolIfAvailable(isSlidingHash, currentIsSliding);
 
         if (motor.JumpedThisFrame())
         {
-            animator.SetTrigger(jumpHash);
+            SetTriggerIfAvailable(jumpHash);
             CrossFadeIfNeeded(JumpState, jumpCrossFadeTime);
             return;
         }
 
         if (motor.LandedThisFrame())
         {
-            animator.SetTrigger(landHash);
+            SetTriggerIfAvailable(landHash);
         }
 
-        UpdateLocomotionState();
+        if (driveAnimatorStateMachine)
+        {
+            UpdateLocomotionState();
+        }
     }
 
-    public void TriggerPrimaryAttack() { }
-    public void TriggerAbilityPrimary() { }
-    public void TriggerAbilitySecondary() { }
-    public void TriggerUltimate() { }
-    public void TriggerSlide() { }
+    public void TriggerPrimaryAttack() => SetTriggerIfAvailable(primaryAttackHash);
+    public void TriggerAbilityPrimary() => SetTriggerIfAvailable(abilityPrimaryHash);
+    public void TriggerAbilitySecondary() => SetTriggerIfAvailable(abilitySecondaryHash);
+    public void TriggerUltimate() => SetTriggerIfAvailable(ultimateHash);
+    public void TriggerSlide() => SetTriggerIfAvailable(slideHash);
 
     private void UpdateLocomotionState()
     {
@@ -146,6 +177,10 @@ public class PlayerAnimationController : MonoBehaviour
         else if (currentIsSprinting)
         {
             targetState = SprintState;
+        }
+        else if (currentSpeed > 3.5f)
+        {
+            targetState = RunState;
         }
         else if (currentSpeed > 0.1f)
         {
@@ -161,10 +196,65 @@ public class PlayerAnimationController : MonoBehaviour
 
     private void CrossFadeIfNeeded(string stateName, float fadeTime)
     {
+        if (!driveAnimatorStateMachine) return;
         if (currentAnimatorStatePath == stateName) return;
+        if (!animator.HasState(0, Animator.StringToHash(stateName))) return;
 
         animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
         currentAnimatorStatePath = stateName;
+    }
+
+    private void CacheAnimatorParameters()
+    {
+        if (animator == null || animator.runtimeAnimatorController == cachedController) return;
+
+        cachedController = animator.runtimeAnimatorController;
+        availableParameterHashes.Clear();
+
+        foreach (AnimatorControllerParameter parameter in animator.parameters)
+        {
+            availableParameterHashes.Add(parameter.nameHash);
+        }
+    }
+
+    private bool HasParameter(int hash)
+    {
+        return availableParameterHashes.Contains(hash);
+    }
+
+    private void SetFloatIfAvailable(int hash, float value, float dampTime = 0f)
+    {
+        if (!HasParameter(hash)) return;
+
+        if (dampTime > 0f)
+        {
+            animator.SetFloat(hash, value, dampTime, Time.deltaTime);
+            return;
+        }
+
+        animator.SetFloat(hash, value);
+    }
+
+    private void SetBoolIfAvailable(int hash, bool value)
+    {
+        if (HasParameter(hash))
+        {
+            animator.SetBool(hash, value);
+        }
+    }
+
+    private void SetTriggerIfAvailable(int hash)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+        {
+            return;
+        }
+
+        CacheAnimatorParameters();
+        if (HasParameter(hash))
+        {
+            animator.SetTrigger(hash);
+        }
     }
 
     private string ResolveMovementState()

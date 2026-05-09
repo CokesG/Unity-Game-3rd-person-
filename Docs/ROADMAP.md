@@ -10,27 +10,41 @@
 - Aim is hold right click.
 - Phase 2 animation scaffolding exists.
 - Unity MCP and Codex are connected.
+- World-class third-person shooter agent brief added in `Docs/WORLD_CLASS_TPS_AGENT_BRIEF.md`.
+- Nightfall animation sandbox scene and sandbox Animator Controller added.
+- Live Player animation bridge made parameter-driven by default to prevent unverified clips from hijacking movement.
+- Movement feel V1 added: acceleration/deceleration, coyote time, jump buffer, slide buffer, and state-specific turn speeds.
+- Camera/aim V1 added: shoulder swap, aim ray, FOV states, recoil, and muzzle-blocked feedback hook.
+- Gunplay V1 added: data-driven prototype rifle, ammo/reload, hitscan, spread/recoil, target dummies, and reticle HUD.
+- Test gym builder added under `Tools > TPS > Create Test Gym Scene`.
 
 ## Next
 
-1. Add a humanoid character model under `Player/CharacterVisual`.
-2. Configure the model as Unity Humanoid.
-3. Assign or create locomotion clips.
-4. Fill `PlayerHumanoid.controller` states/blend trees.
-5. Test movement, sprint, jump, aim, and animation parameter updates.
+1. Use `Docs/HERO_CHARACTER_PIPELINE.md` as the source of truth for the playable hero pipeline.
+2. Test one idle clip in `Assets/Scenes/AnimationSandbox_Nightfall.unity`.
+3. Test one walk clip, then one run/jog clip, then one jump clip.
+4. Promote only verified clips into `Assets/Animations/PlayerHumanoid.controller`.
+5. Enable the live Player Animator only after idle/walk/run/jump are stable in the sandbox.
+6. Test movement, sprint, jump, aim, crouch, slide, and animation parameter updates.
+7. Generate `Assets/Scenes/TPS_TestGym.unity` from the Unity menu and run `Docs/PLAYTEST_CHECKLIST.md`.
 
 ## After Character Locomotion
 
-1. Add combat placeholder animation.
-2. Add weapon or hand socket.
-3. Add hit detection.
-4. Add combat state/cooldowns.
-5. Add enemy target dummy.
+1. Tune movement/camera/rifle values in the test gym.
+2. Replace runtime bootstrap with explicit prefab wiring once scene setup stabilizes.
+3. Add authored muzzle flash and weapon audio.
+4. Add combat placeholder animation.
+5. Add weapon or hand socket on the real humanoid.
+6. Add upper-body aim/fire/reload animation layer.
+7. Add combat state/cooldowns.
 
 ## Later
 
 - Better camera collision tuning.
-- Lock-on or aim assist if needed.
+- Controller aim assist / target friction if needed.
+- Shoulder swap.
+- Mantle and ledge traversal after core shooter movement is stable.
+- Weapon roster: rifle, shotgun, SMG, DMR/sniper.
 - Ability system.
 - Health/damage system.
 - Enemy AI.

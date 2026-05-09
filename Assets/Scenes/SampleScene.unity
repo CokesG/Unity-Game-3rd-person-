@@ -1078,6 +1078,7 @@ MonoBehaviour:
   movementDampTime: 0.05
   locomotionCrossFadeTime: 0.12
   jumpCrossFadeTime: 0.06
+  driveAnimatorStateMachine: 0
   currentMovementState: 
   currentSpeed: 0
   currentMovementX: 0
@@ -1088,6 +1089,8 @@ MonoBehaviour:
   currentIsSprinting: 0
   currentIsJumping: 0
   currentIsFalling: 0
+  currentIsCrouching: 0
+  currentIsSliding: 0
 --- !u!114 &951686970
 MonoBehaviour:
   m_ObjectHideFlags: 0

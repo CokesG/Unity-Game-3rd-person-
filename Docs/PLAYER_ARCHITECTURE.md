@@ -13,6 +13,7 @@ Player
 - CharacterController
 - GroundCheck
 - CameraTarget
+- WeaponMuzzle
 - CharacterVisual
   - Animator
   - Rigged humanoid model
@@ -20,6 +21,7 @@ Player
 - ThirdPersonMotor
 - PlayerAnimationController
 - PlayerCombatHooks
+- PlayerWeaponController
 ```
 
 ## Responsibilities
@@ -35,6 +37,7 @@ Keep these components here:
 - `ThirdPersonMotor`
 - `PlayerAnimationController`
 - `PlayerCombatHooks`
+- `PlayerWeaponController`
 
 ### GroundCheck
 
@@ -43,6 +46,10 @@ Child transform used as the ground probe position. It should stay near the lower
 ### CameraTarget
 
 Child transform followed by `ThirdPersonCameraController`. It should sit around upper chest/head height, not on a bone.
+
+### WeaponMuzzle
+
+Child transform used by `PlayerWeaponController` as the third-person shot origin. It can be a temporary player-root child while weapon art is placeholder. Later, it should follow a weapon socket or hand socket, but gameplay still resolves through the player weapon controller.
 
 ### CharacterVisual
 
@@ -83,3 +90,4 @@ Jumping:
 - Do not parent the camera to a head/spine bone.
 - Do not enable root motion until combat and locomotion are intentionally designed for it.
 - Do not scale the `Player` root to fix character model size. Scale `CharacterVisual` or the model child.
+- Do not let bullets originate from the camera without a muzzle obstruction check.

@@ -6,9 +6,21 @@ Current controller:
 
 `Assets/Animations/PlayerHumanoid.controller`
 
-Assign this controller to the `Animator` on `Player/CharacterVisual`.
+Assign this controller to the live Player visual only after clips are verified in the sandbox.
 
 Keep `Apply Root Motion` disabled.
+
+Sandbox controller:
+
+`Assets/Animations/NightfallVanguard/Nightfall_AnimationSandbox.controller`
+
+Use the sandbox controller first when testing unknown clips.
+
+Sandbox scene:
+
+`Assets/Scenes/AnimationSandbox_Nightfall.unity`
+
+The sandbox exists so bad clips cannot corrupt the live `SampleScene` Player setup.
 
 ## Parameters
 
@@ -36,6 +48,8 @@ Triggers:
 - `AbilitySecondary`
 - `Ultimate`
 
+`PlayerWeaponController` triggers `PrimaryAttack` when the prototype rifle fires. This is intentionally trigger-level integration for now; upper-body aim/fire/reload layers should come after the rifle and camera loop feel good in the test gym.
+
 ## Placeholder States
 
 The controller contains placeholder states for:
@@ -56,7 +70,7 @@ The controller contains placeholder states for:
 
 ## Clip Mapping
 
-Drop clips into matching states or blend tree slots:
+Drop clips into matching states or blend tree slots in the sandbox first:
 
 - `Idle`: idle clip
 - `Walk`: walk forward in-place
@@ -69,6 +83,10 @@ Drop clips into matching states or blend tree slots:
 - `Aim Walk / Strafe`: aim forward, back, left, and right strafe clips
 - `Attack Placeholder`: first basic attack clip
 - `Ability Placeholder`: temporary ability animation
+
+Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing.
+
+The live `PlayerAnimationController` is parameter-driven by default. Leave `driveAnimatorStateMachine` disabled until the Animator transitions or blend trees are intentionally built.
 
 ## Import Settings
 
@@ -96,6 +114,8 @@ In Play mode:
 - `IsAiming` should be true only while holding right click.
 - `IsSprinting` should be true only while holding Shift and moving forward.
 - `IsJumping`, `IsFalling`, and `VerticalVelocity` should react during jump/fall.
+
+For the live scene, the Nightfall Animator may remain disabled while the character is only a static visual. That is intentional until idle/walk/run/jump are verified.
 
 ## Common Fixes
 

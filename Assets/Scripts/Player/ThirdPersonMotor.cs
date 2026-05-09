@@ -12,9 +12,24 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float crouchSpeed = 2.0f;
     [SerializeField] private float rotationSpeed = 15f;
 
+    [Header("Feel")]
+    [SerializeField] private float normalAcceleration = 34f;
+    [SerializeField] private float sprintAcceleration = 42f;
+    [SerializeField] private float aimAcceleration = 28f;
+    [SerializeField] private float groundDeceleration = 46f;
+    [SerializeField] private float airAcceleration = 10f;
+    [SerializeField] private float airDeceleration = 4f;
+    [SerializeField, Range(0f, 1f)] private float airControl = 0.55f;
+    [SerializeField] private float normalRotationSpeed = 15f;
+    [SerializeField] private float aimRotationSpeed = 24f;
+    [SerializeField] private float sprintRotationSpeed = 12f;
+    [SerializeField] private float slideRotationSpeed = 10f;
+
     [Header("Physics")]
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float coyoteTime = 0.1f;
+    [SerializeField] private float jumpBufferTime = 0.12f;
     [SerializeField] private float postJumpGroundLockTime = 0.18f;
     [SerializeField] private float groundCheckRadius = 0.25f;
     [SerializeField] private Vector3 groundCheckOffset = Vector3.zero;
@@ -30,12 +45,18 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideEndSpeed = 3.0f;
     [SerializeField] private float slideDuration = 0.9f;
     [SerializeField] private float slideSteerStrength = 5f;
+    [SerializeField] private float slideInputBufferTime = 0.1f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementMode;
     [SerializeField] private bool debugIsCrouching;
     [SerializeField] private bool debugIsSliding;
     [SerializeField] private float debugCurrentSpeed;
+    [SerializeField] private float debugDesiredSpeed;
+    [SerializeField] private float debugCoyoteTimer;
+    [SerializeField] private float debugJumpBufferTimer;
+    [SerializeField] private float debugSlideBufferTimer;
+    [SerializeField] private Vector3 debugHorizontalVelocity;
     [SerializeField] private float debugCapsuleHeight;
     [SerializeField] private Vector3 debugCameraTargetLocalPosition;
     [SerializeField] private string debugStandBlocker;
@@ -47,6 +68,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private Vector3 verticalVelocity;
     private Vector3 horizontalVelocity;
     private Vector3 moveDirection;
+    private Vector3 desiredMoveDirection;
     private bool isGrounded;
     private bool wasGrounded;
     private bool isSprinting;
@@ -55,6 +77,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private bool hasJumpedSinceGrounded;
     private bool wantsToCrouch;
     private bool isSliding;
+    private bool pendingCrouchToggle;
     private float lastJumpTime = -999f;
     private float standingHeight;
     private float standingStepOffset;
@@ -64,6 +87,10 @@ public class ThirdPersonMotor : MonoBehaviour
     private float slideSpeed;
     private float slideTimer;
     private float currentSpeed;
+    private float desiredSpeed;
+    private float coyoteTimer;
+    private float jumpBufferTimer;
+    private float slideBufferTimer;
 
     private void Awake()
     {
@@ -83,10 +110,7 @@ public class ThirdPersonMotor : MonoBehaviour
             cameraTargetStandingLocalPosition = cameraTarget.localPosition;
         }
 
-        if (Camera.main != null)
-        {
-            mainCamera = Camera.main.transform;
-        }
+        CacheMainCamera();
     }
 
     private void Update()
@@ -94,18 +118,23 @@ public class ThirdPersonMotor : MonoBehaviour
         jumpedThisFrame = false;
         landedThisFrame = false;
 
+        CacheMainCamera();
+        CheckGrounded();
+        TrackBufferedInputs(Time.deltaTime);
+        HandleCrouchAndSlideInput();
+        UpdateCrouchShape(Time.deltaTime);
+        HandleMovement(Time.deltaTime);
+        HandleRotation(Time.deltaTime);
+        HandleGravityAndJump(Time.deltaTime);
+        UpdateDebugReadout();
+    }
+
+    private void CacheMainCamera()
+    {
         if (mainCamera == null && Camera.main != null)
         {
             mainCamera = Camera.main.transform;
         }
-
-        CheckGrounded();
-        HandleCrouchAndSlideInput();
-        UpdateCrouchShape(Time.deltaTime);
-        HandleMovement();
-        HandleRotation();
-        HandleGravityAndJump();
-        UpdateDebugReadout();
     }
 
     private void CheckGrounded()
@@ -116,7 +145,7 @@ public class ThirdPersonMotor : MonoBehaviour
         bool sphereHit = Physics.CheckSphere(spherePos, groundCheckRadius, mask, QueryTriggerInteraction.Ignore);
         bool ignoreGroundAfterJump = hasJumpedSinceGrounded
             && (verticalVelocity.y > 0f || Time.time - lastJumpTime < postJumpGroundLockTime);
-        
+
         wasGrounded = isGrounded;
         isGrounded = !ignoreGroundAfterJump && (controller.isGrounded || sphereHit);
         landedThisFrame = !wasGrounded && isGrounded;
@@ -125,204 +154,304 @@ public class ThirdPersonMotor : MonoBehaviour
         {
             hasJumpedSinceGrounded = false;
         }
-        
-        // Reset vertical velocity if grounded
-        if (isGrounded && verticalVelocity.y < 0)
+
+        if (isGrounded && verticalVelocity.y < 0f)
         {
             verticalVelocity.y = -2f;
         }
     }
 
-    private void HandleCrouchAndSlideInput()
+    private void TrackBufferedInputs(float deltaTime)
     {
-        if (input.CrouchTriggered)
+        if (isGrounded)
         {
-            if (CanStartSlide())
-            {
-                StartSlide();
-            }
-            else if (!isSliding)
-            {
-                ToggleCrouch();
-            }
-
-            input.ConsumeCrouch();
-        }
-
-        if (!isSliding) return;
-
-        slideTimer -= Time.deltaTime;
-        if (!isGrounded || input.AimPressed || slideTimer <= 0f || slideSpeed <= slideEndSpeed + 0.05f)
-        {
-            EndSlide(true);
-        }
-    }
-
-    private void HandleMovement()
-    {
-        if (isSliding)
-        {
-            HandleSlideMovement();
-            return;
-        }
-
-        float inputMag = Mathf.Clamp01(input.MoveInput.magnitude);
-        isSprinting = !input.AimPressed && !wantsToCrouch && input.SprintPressed && input.MoveInput.y > 0.1f && inputMag > 0.01f;
-        
-        if (input.AimPressed)
-        {
-            currentSpeed = aimSpeed;
-        }
-        else if (wantsToCrouch)
-        {
-            currentSpeed = crouchSpeed;
-        }
-        else if (isSprinting)
-        {
-            currentSpeed = sprintSpeed;
+            coyoteTimer = coyoteTime;
         }
         else
         {
-            currentSpeed = Mathf.Lerp(walkSpeed, runSpeed, inputMag);
+            coyoteTimer = Mathf.Max(0f, coyoteTimer - deltaTime);
         }
 
-        if (inputMag < 0.01f) currentSpeed = 0;
-
-        Vector3 moveInput = new Vector3(input.MoveInput.x, 0, input.MoveInput.y);
-        moveInput = Vector3.ClampMagnitude(moveInput, 1f);
-        
-        if (mainCamera == null)
+        if (input.JumpTriggered)
         {
-            horizontalVelocity = Vector3.zero;
+            jumpBufferTimer = jumpBufferTime;
+            input.ConsumeJump();
+        }
+        else
+        {
+            jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - deltaTime);
+        }
+
+        if (input.CrouchTriggered)
+        {
+            slideBufferTimer = slideInputBufferTime;
+            pendingCrouchToggle = true;
+            input.ConsumeCrouch();
+        }
+        else
+        {
+            slideBufferTimer = Mathf.Max(0f, slideBufferTimer - deltaTime);
+        }
+    }
+
+    private void HandleCrouchAndSlideInput()
+    {
+        if (isSliding)
+        {
+            slideTimer -= Time.deltaTime;
+            if (!isGrounded || input.AimPressed || slideTimer <= 0f || slideSpeed <= slideEndSpeed + 0.05f)
+            {
+                EndSlide(true);
+            }
+        }
+
+        if (slideBufferTimer > 0f && CanStartSlide())
+        {
+            StartSlide();
+            pendingCrouchToggle = false;
+            slideBufferTimer = 0f;
             return;
         }
 
-        Vector3 camForward = mainCamera.forward;
-        camForward.y = 0;
-        camForward.Normalize();
-        
-        Vector3 camRight = mainCamera.right;
-        camRight.y = 0;
-        camRight.Normalize();
+        if (!pendingCrouchToggle || isSliding)
+        {
+            return;
+        }
 
-        moveDirection = (camForward * moveInput.z + camRight * moveInput.x).normalized;
-        horizontalVelocity = moveDirection * currentSpeed;
+        bool shouldWaitForSlide = input.SprintPressed && !wantsToCrouch && slideBufferTimer > 0f;
+        if (shouldWaitForSlide)
+        {
+            return;
+        }
 
-        controller.Move(horizontalVelocity * Time.deltaTime);
+        ToggleCrouch();
+        pendingCrouchToggle = false;
+        slideBufferTimer = 0f;
     }
 
-    private void HandleSlideMovement()
+    private void HandleMovement(float deltaTime)
+    {
+        if (isSliding)
+        {
+            HandleSlideMovement(deltaTime);
+            return;
+        }
+
+        Vector3 targetVelocity = BuildTargetHorizontalVelocity();
+        float acceleration = ResolveHorizontalAcceleration(targetVelocity);
+
+        if (!isGrounded && targetVelocity.sqrMagnitude > 0.001f)
+        {
+            targetVelocity = Vector3.Lerp(horizontalVelocity, targetVelocity, airControl);
+        }
+
+        horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetVelocity, acceleration * deltaTime);
+        currentSpeed = new Vector2(horizontalVelocity.x, horizontalVelocity.z).magnitude;
+
+        if (horizontalVelocity.sqrMagnitude > 0.0001f)
+        {
+            controller.Move(horizontalVelocity * deltaTime);
+        }
+    }
+
+    private Vector3 BuildTargetHorizontalVelocity()
+    {
+        float inputMagnitude = Mathf.Clamp01(input.MoveInput.magnitude);
+        isSprinting = CanSprint(inputMagnitude);
+        desiredSpeed = ResolveDesiredSpeed(inputMagnitude);
+
+        if (mainCamera == null || inputMagnitude < 0.01f)
+        {
+            desiredMoveDirection = Vector3.zero;
+            return Vector3.zero;
+        }
+
+        Vector3 moveInput = new Vector3(input.MoveInput.x, 0f, input.MoveInput.y);
+        moveInput = Vector3.ClampMagnitude(moveInput, 1f);
+
+        Vector3 camForward = mainCamera.forward;
+        camForward.y = 0f;
+        camForward.Normalize();
+
+        Vector3 camRight = mainCamera.right;
+        camRight.y = 0f;
+        camRight.Normalize();
+
+        desiredMoveDirection = (camForward * moveInput.z + camRight * moveInput.x).normalized;
+        if (desiredMoveDirection.sqrMagnitude > 0.001f)
+        {
+            moveDirection = desiredMoveDirection;
+        }
+
+        return desiredMoveDirection * desiredSpeed;
+    }
+
+    private float ResolveDesiredSpeed(float inputMagnitude)
+    {
+        if (inputMagnitude < 0.01f) return 0f;
+        if (input.AimPressed) return aimSpeed;
+        if (wantsToCrouch) return crouchSpeed;
+        if (isSprinting) return sprintSpeed;
+
+        return Mathf.Lerp(walkSpeed, runSpeed, inputMagnitude);
+    }
+
+    private float ResolveHorizontalAcceleration(Vector3 targetVelocity)
+    {
+        bool hasTargetVelocity = targetVelocity.sqrMagnitude > 0.001f;
+
+        if (!isGrounded)
+        {
+            return hasTargetVelocity ? airAcceleration : airDeceleration;
+        }
+
+        if (!hasTargetVelocity || targetVelocity.magnitude < horizontalVelocity.magnitude)
+        {
+            return groundDeceleration;
+        }
+
+        if (input.AimPressed) return aimAcceleration;
+        if (isSprinting) return sprintAcceleration;
+
+        return normalAcceleration;
+    }
+
+    private void HandleSlideMovement(float deltaTime)
     {
         isSprinting = false;
         wantsToCrouch = true;
 
-        Vector3 steerInput = new Vector3(input.MoveInput.x, 0, input.MoveInput.y);
+        Vector3 steerInput = new Vector3(input.MoveInput.x, 0f, input.MoveInput.y);
         steerInput = Vector3.ClampMagnitude(steerInput, 1f);
         if (mainCamera != null && steerInput.sqrMagnitude > 0.05f)
         {
             Vector3 camForward = mainCamera.forward;
-            camForward.y = 0;
+            camForward.y = 0f;
             camForward.Normalize();
 
             Vector3 camRight = mainCamera.right;
-            camRight.y = 0;
+            camRight.y = 0f;
             camRight.Normalize();
 
             Vector3 desiredDirection = (camForward * steerInput.z + camRight * steerInput.x).normalized;
             if (desiredDirection.sqrMagnitude > 0.001f)
             {
-                slideDirection = Vector3.Slerp(slideDirection, desiredDirection, slideSteerStrength * Time.deltaTime).normalized;
+                slideDirection = Vector3.Slerp(slideDirection, desiredDirection, slideSteerStrength * deltaTime).normalized;
             }
         }
 
         currentSpeed = slideSpeed;
+        desiredSpeed = slideSpeed;
         horizontalVelocity = slideDirection * slideSpeed;
         moveDirection = slideDirection;
-        controller.Move(horizontalVelocity * Time.deltaTime);
+        controller.Move(horizontalVelocity * deltaTime);
 
-        slideSpeed = Mathf.MoveTowards(slideSpeed, slideEndSpeed, (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f) * Time.deltaTime);
+        slideSpeed = Mathf.MoveTowards(slideSpeed, slideEndSpeed, (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f) * deltaTime);
     }
 
-    private void HandleRotation()
+    private void HandleRotation(float deltaTime)
     {
         if (mainCamera == null) return;
 
+        Vector3 facingDirection = Vector3.zero;
+        float turnSpeed = ResolveRotationSpeed();
+
         if (isSliding && slideDirection.sqrMagnitude > 0.001f)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(slideDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            facingDirection = slideDirection;
         }
         else if (input.AimPressed)
         {
-            Vector3 camForward = mainCamera.forward;
-            camForward.y = 0;
-            if (camForward.sqrMagnitude > 0.001f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(camForward);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            }
+            facingDirection = mainCamera.forward;
+            facingDirection.y = 0f;
         }
-        else if (input.MoveInput.sqrMagnitude > 0.001f)
+        else if (desiredMoveDirection.sqrMagnitude > 0.001f)
         {
-            Vector3 camForward = mainCamera.forward;
-            camForward.y = 0;
-            camForward.Normalize();
-            Vector3 camRight = mainCamera.right;
-            camRight.y = 0;
-            camRight.Normalize();
-            
-            Vector3 moveDirection = (camForward * input.MoveInput.y + camRight * input.MoveInput.x).normalized;
-            
-            if (moveDirection.sqrMagnitude > 0.001f)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            }
+            facingDirection = desiredMoveDirection;
         }
+
+        if (facingDirection.sqrMagnitude <= 0.001f)
+        {
+            return;
+        }
+
+        Quaternion targetRotation = Quaternion.LookRotation(facingDirection.normalized);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * deltaTime);
     }
 
-    private void HandleGravityAndJump()
+    private float ResolveRotationSpeed()
     {
-        if (input.JumpTriggered)
+        if (isSliding) return slideRotationSpeed > 0f ? slideRotationSpeed : rotationSpeed;
+        if (input.AimPressed) return aimRotationSpeed > 0f ? aimRotationSpeed : rotationSpeed;
+        if (isSprinting) return sprintRotationSpeed > 0f ? sprintRotationSpeed : rotationSpeed;
+        return normalRotationSpeed > 0f ? normalRotationSpeed : rotationSpeed;
+    }
+
+    private void HandleGravityAndJump(float deltaTime)
+    {
+        TryConsumeBufferedJump();
+
+        verticalVelocity.y += gravity * deltaTime;
+        controller.Move(verticalVelocity * deltaTime);
+    }
+
+    private void TryConsumeBufferedJump()
+    {
+        if (jumpBufferTimer <= 0f || !CanJump())
         {
-            if (CanJump())
-            {
-                if (isSliding)
-                {
-                    EndSlide(false);
-                }
-                else if (wantsToCrouch)
-                {
-                    TryStand();
-                }
-
-                verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                jumpedThisFrame = true;
-                hasJumpedSinceGrounded = true;
-                isGrounded = false;
-                lastJumpTime = Time.time;
-            }
-
-            input.ConsumeJump();
+            return;
         }
 
-        verticalVelocity.y += gravity * Time.deltaTime;
-        controller.Move(verticalVelocity * Time.deltaTime);
+        if (isSliding)
+        {
+            EndSlide(false);
+        }
+        else if (wantsToCrouch)
+        {
+            if (!CanStand())
+            {
+                return;
+            }
+
+            wantsToCrouch = false;
+        }
+
+        verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        jumpedThisFrame = true;
+        hasJumpedSinceGrounded = true;
+        isGrounded = false;
+        coyoteTimer = 0f;
+        jumpBufferTimer = 0f;
+        lastJumpTime = Time.time;
     }
 
     private bool CanJump()
     {
-        return isGrounded && !hasJumpedSinceGrounded;
+        return (isGrounded || coyoteTimer > 0f) && !hasJumpedSinceGrounded;
+    }
+
+    private bool CanSprint(float inputMagnitude)
+    {
+        return !input.AimPressed
+            && !wantsToCrouch
+            && input.SprintPressed
+            && input.MoveInput.y > 0.1f
+            && inputMagnitude > 0.01f;
     }
 
     private bool CanStartSlide()
     {
+        float inputMagnitude = Mathf.Clamp01(input.MoveInput.magnitude);
+        bool sprintIntent = !input.AimPressed
+            && !wantsToCrouch
+            && input.SprintPressed
+            && input.MoveInput.y > 0.4f
+            && inputMagnitude > 0.01f;
+
         return isGrounded
             && !isSliding
-            && !input.AimPressed
-            && isSprinting
-            && input.MoveInput.y > 0.4f
-            && horizontalVelocity.magnitude > runSpeed * 0.8f;
+            && sprintIntent
+            && horizontalVelocity.magnitude > runSpeed * 0.75f;
     }
 
     private void StartSlide()
@@ -414,6 +543,11 @@ public class ThirdPersonMotor : MonoBehaviour
         debugIsCrouching = IsCrouching();
         debugIsSliding = isSliding;
         debugCurrentSpeed = currentSpeed;
+        debugDesiredSpeed = desiredSpeed;
+        debugCoyoteTimer = coyoteTimer;
+        debugJumpBufferTimer = jumpBufferTimer;
+        debugSlideBufferTimer = slideBufferTimer;
+        debugHorizontalVelocity = horizontalVelocity;
         debugCapsuleHeight = controller.height;
         debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;
         if (!wantsToCrouch)
@@ -441,13 +575,23 @@ public class ThirdPersonMotor : MonoBehaviour
     public bool IsJumping() => !isGrounded && verticalVelocity.y > 0.1f;
     public bool IsFalling() => !isGrounded && verticalVelocity.y < -0.1f;
     public float GetCurrentSpeed() => currentSpeed;
+    public float GetDesiredSpeed() => desiredSpeed;
+    public string GetMovementMode() => currentMovementMode;
     public Vector3 GetHorizontalVelocity() => horizontalVelocity;
     public Vector3 GetMoveDirection() => moveDirection;
     public Vector3 GetVerticalVelocity() => verticalVelocity;
 
     private void OnDrawGizmosSelected()
     {
+        CharacterController currentController = controller != null ? controller : GetComponent<CharacterController>();
+        if (currentController == null)
+        {
+            return;
+        }
+
+        Vector3 capsuleFoot = transform.position + currentController.center + Vector3.down * (currentController.height * 0.5f);
+        Vector3 spherePos = capsuleFoot + Vector3.up * Mathf.Max(groundCheckRadius, 0.02f) + groundCheckOffset;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position + groundCheckOffset, groundCheckRadius);
+        Gizmos.DrawWireSphere(spherePos, groundCheckRadius);
     }
 }

@@ -6,6 +6,8 @@ Use a rigged, clothed humanoid in A-pose or T-pose as the main character base.
 
 Animations can be separate. The model itself should provide a clean mesh, textures, skeleton, and Unity Humanoid avatar.
 
+For the current Nightfall Vanguard implementation and promotion checklist, use `Docs/HERO_CHARACTER_PIPELINE.md`.
+
 ## Why Not Start Naked?
 
 A naked/base body is useful for a modular equipment system, but it adds work:

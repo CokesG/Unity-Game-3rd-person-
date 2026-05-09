@@ -26,6 +26,12 @@ Phase 2 scaffolding is in place:
 - Root motion is intentionally disabled for now.
 - A clean model-only Nightfall Vanguard visual is active under `Player/CharacterVisual`.
 - The old Meshy animated prototype remains disabled in the scene for reference.
+- `Docs/WORLD_CLASS_TPS_AGENT_BRIEF.md` now captures the researched Fortnite-style movement/gunplay target and the missing documentation agents need before pushing toward polished combat.
+- `Assets/Scenes/AnimationSandbox_Nightfall.unity` now exists for one-clip-at-a-time animation testing away from the live Player.
+- `Assets/Animations/NightfallVanguard/Nightfall_AnimationSandbox.controller` now exists with safe placeholder states and parameters for clip testing.
+- Movement feel V1 is implemented in `ThirdPersonMotor`.
+- Camera/aim V1 is implemented in `ThirdPersonCameraController`.
+- Prototype rifle, target dummy damage, reticle HUD, runtime bootstrap, and test gym builder scripts are in place.
 
 The current visual is:
 
@@ -37,7 +43,7 @@ Player
     - NightfallVanguard_FullQuality_Rig
 ```
 
-The rig child's Animator is assigned but disabled until a verified idle/walk/run clip is added. This prevents Unity's Humanoid Animator evaluation from pulling the model below the capsule when no valid clip is present.
+The rig child's Animator is assigned but disabled until verified idle/walk/run/jump clips are added. This prevents Unity's Humanoid Animator evaluation from pulling the model below the capsule when no valid clip is present.
 
 ## Important Architecture Decision
 
@@ -70,10 +76,18 @@ Do not enable root motion unless the movement system is explicitly redesigned to
 - `ThirdPersonCameraController.cs`: follows `CameraTarget`, handles aim shoulder view, collision, pitch/yaw, and reduced sensitivity.
 - `PlayerAnimationController.cs`: sends movement and combat parameters to the Animator.
 - `PlayerCombatHooks.cs`: placeholder combat input hooks that fire Animator triggers.
+- `PlayerWeaponController.cs`: prototype rifle, ammo, reload, spread, recoil, hitscan, and muzzle obstruction.
+- `WeaponDefinition.cs`: data asset shape for weapon tuning.
+- `TargetDummy.cs`: simple damage target for gunplay testing.
+- `TPSReticleHUD.cs`: reticle, hitmarker, ammo/state readout, and blocked muzzle feedback.
+- `TpsRuntimeBootstrap.cs`: adds prototype rifle/HUD/dummies at runtime if a scene has none.
+- `TpsTestGymBuilder.cs`: Unity editor menu for creating a graybox movement/gunplay test gym.
+
+`PlayerAnimationController` now defaults to parameter-driving only. It does not force manual Animator state crossfades unless `driveAnimatorStateMachine` is explicitly enabled later after the controller has verified states and transitions.
 
 ## Next Milestone
 
-Add animation clips back one by one, then verify:
+Use `Docs/HERO_CHARACTER_PIPELINE.md` and add animation clips back one by one in `AnimationSandbox_Nightfall`, then verify:
 
 - Character model faces Unity +Z forward.
 - Feet touch the ground.
@@ -84,4 +98,8 @@ Add animation clips back one by one, then verify:
 
 Combat should come after the character and locomotion visuals are stable.
 
-Do not bulk-assign the Meshy merged animation file again. The first animation pass should enable the Animator only after adding one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.
+Do not bulk-assign the Meshy merged animation file again. The first live animation pass should enable the Animator only after adding one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.
+
+Before a polished combat pass, agents should use `Docs/WORLD_CLASS_TPS_AGENT_BRIEF.md` to define movement feel, camera/aim behavior, weapon data, reticle/shot-origin rules, hit feedback, and manual acceptance tests.
+
+The immediate next validation step is to open Unity, use `Tools > TPS > Create Test Gym Scene`, then run `Docs/PLAYTEST_CHECKLIST.md`.

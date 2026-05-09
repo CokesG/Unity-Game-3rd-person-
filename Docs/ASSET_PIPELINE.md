@@ -6,6 +6,8 @@ Add the humanoid character and locomotion animations before building combat.
 
 Reason: combat timing, hit timing, weapon placement, aim poses, and attack feel all depend on the character's scale, skeleton, orientation, and animation style.
 
+For the exact current hero workflow, use `Docs/HERO_CHARACTER_PIPELINE.md`.
+
 ## Meshy / AI Model Workflow
 
 If generating models with Meshy or another AI model tool, prefer this order:
@@ -98,6 +100,7 @@ Current Nightfall Vanguard Blender findings:
 - Active full-quality prototype mesh is about 197k triangles, which is heavy but visually safer until proper retopology.
 - The rig child's Animator is assigned but disabled until a known-good idle clip is added.
 - The merged Meshy animation file contains many actions and should not be wired to gameplay in bulk.
+- Use `Assets/Scenes/AnimationSandbox_Nightfall.unity` and `Assets/Animations/NightfallVanguard/Nightfall_AnimationSandbox.controller` to test clips before promoting them to the live Player controller.
 
 ## Character Blueprint For This Project
 

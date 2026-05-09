@@ -74,6 +74,14 @@ Current scene choice:
 - The clean visual is wrapped under `NightfallVanguard_FullQuality`.
 - The rig child has an Animator assigned to `Assets/Animations/PlayerHumanoid.controller`, but the Animator component is disabled until a verified idle clip is added.
 - `Animator.applyRootMotion` remains disabled.
+- The live Animator remains disabled until clips are verified in the sandbox.
+
+Animation sandbox:
+
+- `Assets/Scenes/AnimationSandbox_Nightfall.unity`
+- `Assets/Animations/NightfallVanguard/Nightfall_AnimationSandbox.controller`
+- The sandbox controller has placeholder states for idle, walk, run/jog, sprint, jump, fall, land, aim, crouch, slide, attack, and ability testing.
+- Use the sandbox before touching `Assets/Animations/PlayerHumanoid.controller`.
 
 Why: the animated Meshy FBX contains many action clips in one file, including charge, roll, bow, slide, attack, swim, and locomotion takes. Some clips are mislabeled or unsuitable for direct locomotion, so the scene now uses a clean model-only character while we source or build reliable locomotion clips one at a time.
 
@@ -106,6 +114,8 @@ This optimized mesh is no longer the active visual. It caused visible holes/arti
 - This preserves the working Phase 1 movement while we validate good clips one at a time.
 
 Do not bulk-map the Meshy merged animation file back into the controller. Add only verified, in-place humanoid clips.
+
+`PlayerAnimationController` now sends Animator parameters defensively and defaults to not forcing state crossfades. This keeps unverified Animator state layouts from hijacking movement.
 
 Rejected for automatic locomotion:
 
