@@ -22,14 +22,22 @@ public class ThirdPersonMotor : MonoBehaviour
 
     [Header("Crouch / Slide")]
     [SerializeField] private Transform cameraTarget;
-    [SerializeField] private float crouchHeight = 1.25f;
-    [SerializeField] private float crouchCameraTargetY = 0.35f;
+    [SerializeField] private float crouchHeight = 1.1f;
+    [SerializeField] private float crouchCameraTargetY = 0.15f;
     [SerializeField] private float crouchTransitionSpeed = 12f;
     [SerializeField] private float crouchStepOffset = 0.15f;
     [SerializeField] private float slideStartSpeed = 8.5f;
     [SerializeField] private float slideEndSpeed = 3.0f;
     [SerializeField] private float slideDuration = 0.9f;
     [SerializeField] private float slideSteerStrength = 5f;
+
+    [Header("Debug Readout")]
+    [SerializeField] private string currentMovementMode;
+    [SerializeField] private bool debugIsCrouching;
+    [SerializeField] private bool debugIsSliding;
+    [SerializeField] private float debugCurrentSpeed;
+    [SerializeField] private float debugCapsuleHeight;
+    [SerializeField] private Vector3 debugCameraTargetLocalPosition;
 
     private CharacterController controller;
     private PlayerInputHandler input;
@@ -96,6 +104,7 @@ public class ThirdPersonMotor : MonoBehaviour
         HandleMovement();
         HandleRotation();
         HandleGravityAndJump();
+        UpdateDebugReadout();
     }
 
     private void CheckGrounded()
@@ -383,6 +392,24 @@ public class ThirdPersonMotor : MonoBehaviour
         }
 
         cameraTarget.localPosition = Vector3.Lerp(cameraTarget.localPosition, targetCameraPosition, t);
+    }
+
+    private void UpdateDebugReadout()
+    {
+        debugIsCrouching = IsCrouching();
+        debugIsSliding = isSliding;
+        debugCurrentSpeed = currentSpeed;
+        debugCapsuleHeight = controller.height;
+        debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;
+
+        if (isSliding) currentMovementMode = "Slide";
+        else if (wantsToCrouch) currentMovementMode = currentSpeed > 0.1f ? "Crouch Move" : "Crouch Idle";
+        else if (input.AimPressed) currentMovementMode = currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
+        else if (!isGrounded) currentMovementMode = verticalVelocity.y > 0f ? "Jumping" : "Falling";
+        else if (isSprinting) currentMovementMode = "Sprint";
+        else if (currentSpeed > walkSpeed + 0.1f) currentMovementMode = "Run";
+        else if (currentSpeed > 0.1f) currentMovementMode = "Walk";
+        else currentMovementMode = "Idle";
     }
 
     public bool IsGrounded() => isGrounded;

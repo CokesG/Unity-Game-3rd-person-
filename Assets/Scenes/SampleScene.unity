@@ -1111,14 +1111,20 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967291
   cameraTarget: {fileID: 1608322658}
-  crouchHeight: 1.25
-  crouchCameraTargetY: 0.35
+  crouchHeight: 1.1
+  crouchCameraTargetY: 0.15
   crouchTransitionSpeed: 12
   crouchStepOffset: 0.15
   slideStartSpeed: 8.5
   slideEndSpeed: 3
   slideDuration: 0.9
   slideSteerStrength: 5
+  currentMovementMode: 
+  debugIsCrouching: 0
+  debugIsSliding: 0
+  debugCurrentSpeed: 0
+  debugCapsuleHeight: 0
+  debugCameraTargetLocalPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &951686971
 MonoBehaviour:
   m_ObjectHideFlags: 0
