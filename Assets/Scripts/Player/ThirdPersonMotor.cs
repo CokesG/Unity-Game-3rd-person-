@@ -38,6 +38,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float debugCurrentSpeed;
     [SerializeField] private float debugCapsuleHeight;
     [SerializeField] private Vector3 debugCameraTargetLocalPosition;
+    [SerializeField] private string debugStandBlocker;
 
     private CharacterController controller;
     private PlayerInputHandler input;
@@ -368,7 +369,21 @@ public class ThirdPersonMotor : MonoBehaviour
         Vector3 worldCenter = transform.position + standingCenter;
         Vector3 bottom = worldCenter + Vector3.down * (standingHeight * 0.5f - radius) + Vector3.up * 0.05f;
         Vector3 top = worldCenter + Vector3.up * (standingHeight * 0.5f - radius);
-        return !Physics.CheckCapsule(bottom, top, radius, mask, QueryTriggerInteraction.Ignore);
+        Collider[] hits = Physics.OverlapCapsule(bottom, top, radius, mask, QueryTriggerInteraction.Ignore);
+
+        foreach (Collider hit in hits)
+        {
+            if (hit == null || hit.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            debugStandBlocker = hit.name;
+            return false;
+        }
+
+        debugStandBlocker = string.Empty;
+        return true;
     }
 
     private void UpdateCrouchShape(float deltaTime)
@@ -401,6 +416,10 @@ public class ThirdPersonMotor : MonoBehaviour
         debugCurrentSpeed = currentSpeed;
         debugCapsuleHeight = controller.height;
         debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;
+        if (!wantsToCrouch)
+        {
+            debugStandBlocker = string.Empty;
+        }
 
         if (isSliding) currentMovementMode = "Slide";
         else if (wantsToCrouch) currentMovementMode = currentSpeed > 0.1f ? "Crouch Move" : "Crouch Idle";
