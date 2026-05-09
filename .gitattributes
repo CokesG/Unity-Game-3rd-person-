@@ -1,0 +1,22 @@
+* text=auto
+
+*.cs text
+*.shader text
+*.asmdef text
+*.asmref text
+*.asset text
+*.meta text
+*.unity text
+*.controller text
+*.inputactions text
+*.json text
+*.txt text
+*.wlt text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.fbx binary
+*.anim binary
+*.wav binary
+*.mp3 binary
