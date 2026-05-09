@@ -14,6 +14,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [Header("Physics")]
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float postJumpGroundLockTime = 0.18f;
     [SerializeField] private float groundCheckRadius = 0.25f;
     [SerializeField] private Vector3 groundCheckOffset = Vector3.zero;
     [SerializeField] private LayerMask groundMask;
@@ -30,6 +31,8 @@ public class ThirdPersonMotor : MonoBehaviour
     private bool isSprinting;
     private bool jumpedThisFrame;
     private bool landedThisFrame;
+    private bool hasJumpedSinceGrounded;
+    private float lastJumpTime = -999f;
     private float currentSpeed;
 
     private void Awake()
@@ -64,10 +67,17 @@ public class ThirdPersonMotor : MonoBehaviour
         Vector3 spherePos = capsuleFoot + Vector3.up * Mathf.Max(groundCheckRadius, 0.02f) + groundCheckOffset;
         int mask = groundMask.value == 0 ? Physics.DefaultRaycastLayers : groundMask.value;
         bool sphereHit = Physics.CheckSphere(spherePos, groundCheckRadius, mask, QueryTriggerInteraction.Ignore);
+        bool ignoreGroundAfterJump = hasJumpedSinceGrounded
+            && (verticalVelocity.y > 0f || Time.time - lastJumpTime < postJumpGroundLockTime);
         
         wasGrounded = isGrounded;
-        isGrounded = controller.isGrounded || sphereHit;
+        isGrounded = !ignoreGroundAfterJump && (controller.isGrounded || sphereHit);
         landedThisFrame = !wasGrounded && isGrounded;
+
+        if (landedThisFrame)
+        {
+            hasJumpedSinceGrounded = false;
+        }
         
         // Reset vertical velocity if grounded
         if (isGrounded && verticalVelocity.y < 0)
@@ -158,15 +168,27 @@ public class ThirdPersonMotor : MonoBehaviour
 
     private void HandleGravityAndJump()
     {
-        if (input.JumpTriggered && isGrounded)
+        if (input.JumpTriggered)
         {
-            verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            jumpedThisFrame = true;
+            if (CanJump())
+            {
+                verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                jumpedThisFrame = true;
+                hasJumpedSinceGrounded = true;
+                isGrounded = false;
+                lastJumpTime = Time.time;
+            }
+
             input.ConsumeJump();
         }
 
         verticalVelocity.y += gravity * Time.deltaTime;
         controller.Move(verticalVelocity * Time.deltaTime);
+    }
+
+    private bool CanJump()
+    {
+        return isGrounded && !hasJumpedSinceGrounded;
     }
 
     public bool IsGrounded() => isGrounded;
