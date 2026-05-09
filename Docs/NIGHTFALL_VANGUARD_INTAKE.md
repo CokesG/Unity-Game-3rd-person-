@@ -12,6 +12,7 @@ Imported Meshy files:
 Generated prototype Unity FBX:
 
 - `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Animated.fbx`
+- `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Optimized50k.fbx`
 
 ## Blender Inspection
 
@@ -55,14 +56,33 @@ The prototype was placed under:
 ```text
 Player
 - CharacterVisual
-  - NightfallVanguard_Prototype
-    - NightfallVanguard_Armature
-    - NightfallVanguard_Mesh
+  - NightfallVanguard_Optimized50k
+    - NightfallVanguard_Optimized_Armature
+    - NightfallVanguard_Optimized_Mesh
 ```
 
-The `Animator` now lives on `NightfallVanguard_Prototype`, not on the empty `CharacterVisual` object.
+The `Animator` now lives on `NightfallVanguard_Optimized50k`, not on the empty `CharacterVisual` object.
 
 `Animator.applyRootMotion` remains disabled.
+
+## Optimization Pass
+
+The first FBX import was too heavy:
+
+- Original Blender mesh: about 197k triangles.
+- Original Unity skinned mesh: 272,783 vertices.
+
+A decimated prototype export was created in Blender:
+
+- `NightfallVanguard_Prototype_Optimized50k.fbx`
+- Blender mesh target: about 50k triangles.
+- Unity imported skinned mesh: 98,731 vertices.
+- Unity Humanoid avatar: valid.
+- Imported animation clips: 40.
+- Skinned mesh quality in scene: `Bone2`.
+- `updateWhenOffscreen`: false.
+
+This is still a prototype optimization, not proper game retopology. It is good enough for movement/animation tests, but a production version should use clean retopology instead of decimation.
 
 ## Animator Mapping
 
@@ -94,7 +114,8 @@ This asset is usable for:
 
 This asset is not final hero quality because:
 
-- It is heavy at roughly 197k triangles / 272k imported vertices.
+- The original is heavy at roughly 197k triangles / 272k imported vertices.
+- The optimized prototype is better but still decimated, not cleanly retopologized.
 - It is all-triangle topology.
 - It has no finger bones.
 - The hands cannot support polished weapon grips, casting, item handling, or close-up hero animation yet.
