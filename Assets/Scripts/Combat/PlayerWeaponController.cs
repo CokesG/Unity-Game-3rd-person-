@@ -174,8 +174,15 @@ public class PlayerWeaponController : MonoBehaviour
 
         Vector3 aimPoint = ResolveAimPoint(activeWeapon);
         Vector3 shotOrigin = muzzle.position;
-        Vector3 baseDirection = (aimPoint - shotOrigin).normalized;
-        float targetDistance = Vector3.Distance(shotOrigin, aimPoint);
+        Vector3 toAimPoint = aimPoint - shotOrigin;
+        if (toAimPoint.sqrMagnitude < 0.001f)
+        {
+            toAimPoint = transform.forward * activeWeapon.maxRange;
+            aimPoint = shotOrigin + toAimPoint;
+        }
+
+        Vector3 baseDirection = toAimPoint.normalized;
+        float targetDistance = toAimPoint.magnitude;
         RaycastHit muzzleHit;
         muzzleBlocked = IsMuzzleBlocked(shotOrigin, baseDirection, targetDistance, activeWeapon, out muzzleHit);
         cameraController?.SetMuzzleBlocked(muzzleBlocked);
@@ -205,8 +212,12 @@ public class PlayerWeaponController : MonoBehaviour
     {
         if (cameraController != null)
         {
-            debugLastAimPoint = cameraController.AimPoint;
-            return cameraController.AimPoint;
+            Vector3 cameraAimPoint = cameraController.AimPoint;
+            if (cameraAimPoint != Vector3.zero)
+            {
+                debugLastAimPoint = cameraAimPoint;
+                return cameraAimPoint;
+            }
         }
 
         Camera mainCamera = Camera.main;
@@ -230,8 +241,16 @@ public class PlayerWeaponController : MonoBehaviour
     {
         WeaponDefinition activeWeapon = ActiveWeapon;
         Vector3 aimPoint = ResolveAimPoint(activeWeapon);
-        Vector3 direction = (aimPoint - muzzle.position).normalized;
-        float distance = Vector3.Distance(muzzle.position, aimPoint);
+        Vector3 toAimPoint = aimPoint - muzzle.position;
+        if (toAimPoint.sqrMagnitude < 0.001f)
+        {
+            muzzleBlocked = false;
+            cameraController?.SetMuzzleBlocked(false);
+            return;
+        }
+
+        Vector3 direction = toAimPoint.normalized;
+        float distance = toAimPoint.magnitude;
         muzzleBlocked = IsMuzzleBlocked(muzzle.position, direction, distance, activeWeapon, out _);
         cameraController?.SetMuzzleBlocked(muzzleBlocked);
     }
@@ -240,7 +259,7 @@ public class PlayerWeaponController : MonoBehaviour
     {
         if (distance <= 0.05f)
         {
-            hit = default;
+            hit = default(RaycastHit);
             return false;
         }
 
@@ -258,7 +277,7 @@ public class PlayerWeaponController : MonoBehaviour
             return true;
         }
 
-        hit = default;
+        hit = default(RaycastHit);
         return false;
     }
 
