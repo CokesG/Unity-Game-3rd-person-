@@ -1098,16 +1098,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonMotor
   walkSpeed: 2.5
   runSpeed: 5.5
-  sprintSpeed: 5.5
-  aimSpeed: 2.4
+  sprintSpeed: 7.25
+  aimSpeed: 3
+  crouchSpeed: 2
   rotationSpeed: 15
   gravity: -9.81
   jumpHeight: 1.5
+  postJumpGroundLockTime: 0.18
   groundCheckRadius: 0.25
   groundCheckOffset: {x: 0, y: 0, z: 0}
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967291
+  cameraTarget: {fileID: 1608322658}
+  crouchHeight: 1.25
+  crouchCameraTargetY: 0.35
+  crouchTransitionSpeed: 12
+  crouchStepOffset: 0.15
+  slideStartSpeed: 8.5
+  slideEndSpeed: 3
+  slideDuration: 0.9
+  slideSteerStrength: 5
 --- !u!114 &951686971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1126,6 +1137,8 @@ MonoBehaviour:
   jumpActionName: Jump
   sprintActionName: Sprint
   aimActionName: Aim
+  crouchActionName: Crouch
+  crouchFallbackActionName: Slide
 --- !u!143 &951686972
 CharacterController:
   m_ObjectHideFlags: 0

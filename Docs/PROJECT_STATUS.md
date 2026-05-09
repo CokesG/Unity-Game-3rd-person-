@@ -9,10 +9,12 @@ The project is in Phase 2 stabilization.
 Phase 1 movement and camera are working:
 
 - WASD movement through a `CharacterController`.
-- Shift sprinting forward.
+- Shift sprinting forward at a faster movement speed than normal run.
 - Space jump.
 - Third-person camera following `CameraTarget`.
 - Hold right click to aim.
+- C toggles crouch when grounded.
+- C while sprinting forward starts a short slide and ends crouched.
 - Mouse sensitivity reduced from the first pass.
 
 Phase 2 scaffolding is in place:

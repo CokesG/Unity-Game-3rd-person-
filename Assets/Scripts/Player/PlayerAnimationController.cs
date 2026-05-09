@@ -169,6 +169,8 @@ public class PlayerAnimationController : MonoBehaviour
 
     private string ResolveMovementState()
     {
+        if (motor.IsSliding()) return "Sliding";
+        if (motor.IsCrouching()) return currentSpeed > 0.1f ? "Crouch Move" : "Crouch Idle";
         if (currentIsAiming) return currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
         if (currentIsJumping) return "Jumping";
         if (currentIsFalling) return "Falling";
