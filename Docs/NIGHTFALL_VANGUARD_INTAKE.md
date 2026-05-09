@@ -56,14 +56,20 @@ The prototype was placed under:
 ```text
 Player
 - CharacterVisual
-  - NightfallVanguard_Optimized50k
-    - NightfallVanguard_Optimized_Armature
-    - NightfallVanguard_Optimized_Mesh
+  - NightfallVanguard_Prototype
+    - NightfallVanguard_Armature
+    - NightfallVanguard_Mesh
 ```
 
-The `Animator` now lives on `NightfallVanguard_Optimized50k`, not on the empty `CharacterVisual` object.
+The `Animator` now lives on `NightfallVanguard_Prototype`, not on the empty `CharacterVisual` object.
 
 `Animator.applyRootMotion` remains disabled.
+
+Current scene choice:
+
+- The active scene uses the original prototype FBX because the decimated 50k version damaged the visual quality too much.
+- The 50k optimized FBX remains in the project as an experiment/reference only.
+- Future optimization should use real retopology, not blunt decimation.
 
 ## Optimization Pass
 
@@ -72,7 +78,7 @@ The first FBX import was too heavy:
 - Original Blender mesh: about 197k triangles.
 - Original Unity skinned mesh: 272,783 vertices.
 
-A decimated prototype export was created in Blender:
+A decimated prototype export was created in Blender as an experiment:
 
 - `NightfallVanguard_Prototype_Optimized50k.fbx`
 - Blender mesh target: about 50k triangles.
@@ -82,7 +88,7 @@ A decimated prototype export was created in Blender:
 - Skinned mesh quality in scene: `Bone2`.
 - `updateWhenOffscreen`: false.
 
-This is still a prototype optimization, not proper game retopology. It is good enough for movement/animation tests, but a production version should use clean retopology instead of decimation.
+This is not the active visual because quality degraded too much. It is a useful measurement/reference, but production optimization should use clean retopology instead of decimation.
 
 ## Animator Mapping
 
