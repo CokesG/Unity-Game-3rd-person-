@@ -4,21 +4,21 @@ public class ThirdPersonCameraController : MonoBehaviour
 {
     [Header("Follow Settings")]
     [SerializeField] private Transform target;
-    [SerializeField] private float distance = 4.5f;
-    [SerializeField] private float aimDistance = 2.5f;
-    [SerializeField] private float heightOffset = 0.2f;
-    [SerializeField] private float shoulderOffset = 0.6f;
-    [SerializeField] private float aimShoulderOffset = 0.8f;
+    [SerializeField] private float distance = 3.75f;
+    [SerializeField] private float aimDistance = 2.45f;
+    [SerializeField] private float heightOffset = 0.05f;
+    [SerializeField] private float shoulderOffset = 0.45f;
+    [SerializeField] private float aimShoulderOffset = 0.65f;
 
     [Header("Look Settings")]
-    [SerializeField] private float sensitivityX = 95f;
-    [SerializeField] private float sensitivityY = 70f;
-    [SerializeField] private float minPitch = -35f;
-    [SerializeField] private float maxPitch = 70f;
+    [SerializeField] private float sensitivityX = 28f;
+    [SerializeField] private float sensitivityY = 18f;
+    [SerializeField] private float minPitch = -28f;
+    [SerializeField] private float maxPitch = 55f;
     
     [Header("Smoothing")]
-    [SerializeField] private float followSmoothTime = 0.05f;
-    [SerializeField] private float rotationSmoothTime = 0.03f;
+    [SerializeField] private float followSmoothTime = 0.08f;
+    [SerializeField] private float rotationSmoothTime = 0.07f;
 
     [Header("Collision")]
     [SerializeField] private bool handleCollision = true;
@@ -58,11 +58,14 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         currentDistance = distance;
         currentShoulderOffset = shoulderOffset;
+        smoothTargetPos = target != null ? target.position : transform.position;
         
         // Initialize yaw/pitch from current rotation
         Vector3 rotation = transform.eulerAngles;
         currentYaw = rotation.y;
         currentPitch = rotation.x;
+        if (currentPitch > 180f) currentPitch -= 360f;
+        currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
