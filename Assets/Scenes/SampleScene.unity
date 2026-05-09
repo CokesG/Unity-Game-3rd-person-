@@ -756,6 +756,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 2d09f26cdf79a1149892d963a314a0b8, type: 2}
     - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
+      propertyPath: m_AnimatePhysics
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
@@ -1125,6 +1129,7 @@ MonoBehaviour:
   debugCurrentSpeed: 0
   debugCapsuleHeight: 0
   debugCameraTargetLocalPosition: {x: 0, y: 0, z: 0}
+  debugStandBlocker: 
 --- !u!114 &951686971
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1270,7 +1275,7 @@ Transform:
   m_GameObject: {fileID: 1186776456}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.83984894, z: 0}
+  m_LocalPosition: {x: 0, y: -0.839849, z: 0}
   m_LocalScale: {x: 0.9277919, y: 0.9277919, z: 0.9277919}
   m_ConstrainProportionsScale: 0
   m_Children:
