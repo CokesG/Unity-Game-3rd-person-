@@ -83,6 +83,14 @@ Animation sandbox:
 - The sandbox controller has placeholder states for idle, walk, run/jog, sprint, jump, fall, land, aim, crouch, slide, attack, and ability testing.
 - Use the sandbox before touching `Assets/Animations/PlayerHumanoid.controller`.
 
+Linked GLB clip sandbox:
+
+- `Assets/Scenes/AnimationSandbox_Nightfall_Linked.unity`
+- `Assets/Animations/NightfallVanguard/Nightfall_GLB_Linked.controller`
+- `Assets/Animations/NightfallVanguard/GLBClips`
+- `Docs/NIGHTFALL_ANIMATION_LINKING.md`
+- These clips are generic transform clips cloned from the labeled Meshy GLBs. They are for review and promotion only after visual testing.
+
 Why: the animated Meshy FBX contains many action clips in one file, including charge, roll, bow, slide, attack, swim, and locomotion takes. Some clips are mislabeled or unsuitable for direct locomotion, so the scene now uses a clean model-only character while we source or build reliable locomotion clips one at a time.
 
 ## Optimization Pass

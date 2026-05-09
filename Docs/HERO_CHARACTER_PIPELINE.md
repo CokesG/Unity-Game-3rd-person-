@@ -12,6 +12,12 @@ Use this scene for animation testing:
 Assets/Scenes/AnimationSandbox_Nightfall.unity
 ```
 
+Use this scene for the linked Meshy GLB clip review pass:
+
+```text
+Assets/Scenes/AnimationSandbox_Nightfall_Linked.unity
+```
+
 Use this Animator Controller for sandbox clip testing:
 
 ```text
@@ -63,6 +69,20 @@ Assets/Art/Characters/NightfallVanguard/Source/Meshy_AI_Nightfall_Vanguard_biped
 ```
 
 Those files are reference-only until each action is inspected in Blender and tested in the sandbox.
+
+The labeled Meshy GLB animation exports have now been cloned into native Unity `.anim` clips under:
+
+```text
+Assets/Animations/NightfallVanguard/GLBClips
+```
+
+They are wired only into the linked sandbox controller:
+
+```text
+Assets/Animations/NightfallVanguard/Nightfall_GLB_Linked.controller
+```
+
+Do not promote them to the live Player until they pass visual review in `AnimationSandbox_Nightfall_Linked`.
 
 ## Production Hero Blueprint
 
@@ -187,4 +207,3 @@ Before enabling animation in `SampleScene`:
 - Release right click clears `IsAiming`.
 - C toggles crouch/stand.
 - Sprint plus C starts slide and ends crouched.
-

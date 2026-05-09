@@ -22,6 +22,12 @@ Sandbox scene:
 
 The sandbox exists so bad clips cannot corrupt the live `SampleScene` Player setup.
 
+Linked Meshy GLB animation sandbox:
+
+`Assets/Scenes/AnimationSandbox_Nightfall_Linked.unity`
+
+This scene uses cloned clips from the new labeled Meshy GLBs and a sandbox-only armature rename so the generic GLB curves bind to the current full-quality model. See `Docs/NIGHTFALL_ANIMATION_LINKING.md`.
+
 ## Parameters
 
 Floats:

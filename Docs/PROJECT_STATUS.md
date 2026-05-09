@@ -29,6 +29,7 @@ Phase 2 scaffolding is in place:
 - `Docs/WORLD_CLASS_TPS_AGENT_BRIEF.md` now captures the researched Fortnite-style movement/gunplay target and the missing documentation agents need before pushing toward polished combat.
 - `Assets/Scenes/AnimationSandbox_Nightfall.unity` now exists for one-clip-at-a-time animation testing away from the live Player.
 - `Assets/Animations/NightfallVanguard/Nightfall_AnimationSandbox.controller` now exists with safe placeholder states and parameters for clip testing.
+- `Assets/Scenes/AnimationSandbox_Nightfall_Linked.unity` now exists for reviewing the labeled Meshy GLB animations through cloned native Unity `.anim` clips.
 - Movement feel V1 is implemented in `ThirdPersonMotor`.
 - Camera/aim V1 is implemented in `ThirdPersonCameraController`.
 - Prototype rifle, target dummy damage, reticle HUD, runtime bootstrap, and test gym builder scripts are in place.
@@ -109,6 +110,8 @@ Use `Docs/HERO_CHARACTER_PIPELINE.md` and add animation clips back one by one in
 Combat should come after the character and locomotion visuals are stable.
 
 Do not bulk-assign the Meshy merged animation file again. The first live animation pass should enable the Animator only after adding one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.
+
+Use `Docs/NIGHTFALL_ANIMATION_LINKING.md` for the GLB clip review workflow.
 
 Before a polished combat pass, agents should use `Docs/WORLD_CLASS_TPS_AGENT_BRIEF.md` to define movement feel, camera/aim behavior, weapon data, reticle/shot-origin rules, hit feedback, and manual acceptance tests.
 
