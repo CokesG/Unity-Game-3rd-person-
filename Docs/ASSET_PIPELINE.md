@@ -82,6 +82,21 @@ Blender is useful for:
 
 Blender should not replace the Unity controller architecture. The Unity `Player` root remains the gameplay object.
 
+Current local Blender MCP setup:
+
+- Blender add-on: Blender MCP.
+- Expected bridge port: `localhost:9876`.
+- The add-on has been patched locally to auto-start the bridge when Blender opens.
+- If Codex cannot connect, reopen Blender and verify the `BlenderMCP` sidebar says the server is running.
+
+Current Nightfall Vanguard Blender findings:
+
+- Clean Unity visual export: `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_NoAnimations.fbx`.
+- Source rig has 24 bones and is Unity Humanoid compatible.
+- Finger bones are not present, so hands will not support polished finger animation.
+- Optimized prototype mesh is about 50k triangles but still not production retopology.
+- The merged Meshy animation file contains many actions and should not be wired to gameplay in bulk.
+
 ## Character Blueprint For This Project
 
 Target character style:

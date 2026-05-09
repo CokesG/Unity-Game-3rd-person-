@@ -13,6 +13,7 @@ Generated prototype Unity FBX:
 
 - `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Animated.fbx`
 - `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Optimized50k.fbx`
+- `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_NoAnimations.fbx`
 
 ## Blender Inspection
 
@@ -67,9 +68,13 @@ The `Animator` now lives on `NightfallVanguard_Prototype`, not on the empty `Cha
 
 Current scene choice:
 
-- The active scene uses the original prototype FBX because the decimated 50k version damaged the visual quality too much.
-- The 50k optimized FBX remains in the project as an experiment/reference only.
-- Future optimization should use real retopology, not blunt decimation.
+- The active scene uses `NightfallVanguard_ModelOnly_NoAnimations.fbx`.
+- The old animated prototype remains under `CharacterVisual`, but is disabled.
+- The clean FBX imports as Humanoid with `importAnimation = false`.
+- The clean visual has one active Animator using `Assets/Animations/PlayerHumanoid.controller`.
+- `Animator.applyRootMotion` remains disabled.
+
+Why: the animated Meshy FBX contains many action clips in one file, including charge, roll, bow, slide, attack, swim, and locomotion takes. Some clips are mislabeled or unsuitable for direct locomotion, so the scene now uses a clean model-only character while we source or build reliable locomotion clips one at a time.
 
 ## Optimization Pass
 
@@ -88,25 +93,25 @@ A decimated prototype export was created in Blender as an experiment:
 - Skinned mesh quality in scene: `Bone2`.
 - `updateWhenOffscreen`: false.
 
-This is not the active visual because quality degraded too much. It is a useful measurement/reference, but production optimization should use clean retopology instead of decimation.
+This optimized mesh is now the base for the clean no-animation visual because it gives us a safer prototype size than the 197k-triangle source. It is still not final hero topology. Production optimization should use clean retopology instead of blunt decimation.
 
 ## Animator Mapping
 
-Mapped into `Assets/Animations/PlayerHumanoid.controller`:
+`Assets/Animations/PlayerHumanoid.controller` is intentionally clean right now.
 
-- Idle: `Idle_10`
-- Walk: `Walking`
-- Run/Jog: `Running`
-- Sprint: `Running`
-- Jump Start: `Jump_Run`
-- Falling / In Air: `Jump_Run` placeholder
-- Landing: `Jump_Run` placeholder
-- Aim Idle: `Idle_10`
-- Aim Walk / Strafe: `Walk_Forward_with_Bow_Aimed` plus available turning/back-run placeholders
-- Attack Placeholder: `Thrust_Slash` or `Charged_Slash`
-- Ability Placeholder: `Spartan_Kick` or `Roll_Dodge`
+- Idle, Walk, Sprint, and Jump Start states exist.
+- No Meshy motion clips are assigned to these states.
+- The controller receives parameters from `PlayerAnimationController`.
+- This preserves the working Phase 1 movement while we validate good clips one at a time.
 
-This mapping is for prototype validation, not final animation tuning.
+Do not bulk-map the Meshy merged animation file back into the controller. Add only verified, in-place humanoid clips.
+
+Rejected for automatic locomotion:
+
+- `Walking`: direct clip testing produced a forward roll/curl pose instead of clean walking.
+- `Running`: direct clip testing produced a crouched/airborne-looking pose instead of clean running.
+- `Female_Head_Down_Charge`: should be a future ability/movement action only, not default run.
+- `Roll_Dodge`: should be a future dodge/slide action only, not mapped to WASD.
 
 ## Verdict
 
@@ -116,6 +121,7 @@ This asset is usable for:
 - Testing the Unity Humanoid import path.
 - Testing the `CharacterVisual` hierarchy.
 - Testing basic animation parameter flow.
+- Testing controller-driven movement with a clean rigged visual.
 - Prototyping movement/aim/combat placeholders.
 
 This asset is not final hero quality because:
@@ -126,6 +132,7 @@ This asset is not final hero quality because:
 - It has no finger bones.
 - The hands cannot support polished weapon grips, casting, item handling, or close-up hero animation yet.
 - Texture/material import appears incomplete or not conventional from Blender inspection.
+- The bundled locomotion clips should not be trusted until each one is inspected and tested in isolation.
 
 ## Recommended Next Step
 

@@ -4,7 +4,7 @@ Last updated: 2026-05-09
 
 ## Current Phase
 
-The project is between Phase 1 and Phase 2.
+The project is in Phase 2 stabilization.
 
 Phase 1 movement and camera are working:
 
@@ -22,6 +22,17 @@ Phase 2 scaffolding is in place:
 - `Assets/Animations/PlayerHumanoid.controller` exists.
 - `PlayerAnimationController` drives Animator parameters from input and motor state.
 - Root motion is intentionally disabled for now.
+- A clean model-only Nightfall Vanguard visual is active under `Player/CharacterVisual`.
+- The old Meshy animated prototype remains disabled in the scene for reference.
+
+The current visual is:
+
+```text
+Player
+- CharacterVisual
+  - NightfallVanguard_Prototype       disabled, contains bad/mixed Meshy clips
+  - NightfallVanguard_ModelOnly       active, Humanoid, no imported animations
+```
 
 ## Important Architecture Decision
 
@@ -57,7 +68,7 @@ Do not enable root motion unless the movement system is explicitly redesigned to
 
 ## Next Milestone
 
-Add a real humanoid character model and animation clips, then verify:
+Add animation clips back one by one, then verify:
 
 - Character model faces Unity +Z forward.
 - Feet touch the ground.
@@ -67,3 +78,5 @@ Add a real humanoid character model and animation clips, then verify:
 - No sideways movement, moonwalking, or aim-state sticking.
 
 Combat should come after the character and locomotion visuals are stable.
+
+Do not bulk-assign the Meshy merged animation file again. The first animation pass should use only one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.
