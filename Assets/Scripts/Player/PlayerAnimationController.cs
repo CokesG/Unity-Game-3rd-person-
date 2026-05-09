@@ -13,7 +13,6 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float movementDampTime = 0.08f;
     [SerializeField] private float locomotionCrossFadeTime = 0.12f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
-    [SerializeField] private float actionLockSeconds = 0.8f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -42,27 +41,13 @@ public class PlayerAnimationController : MonoBehaviour
     private int verticalVelocityHash;
     private int jumpHash;
     private int landHash;
-    private int primaryAttackHash;
-    private int abilityPrimaryHash;
-    private int abilitySecondaryHash;
-    private int ultimateHash;
 
     private const string IdleState = "Base Layer.Idle";
     private const string WalkState = "Base Layer.Walk";
     private const string SprintState = "Base Layer.Sprint";
     private const string JumpState = "Base Layer.Jump Start";
-    private const string FallingState = "Base Layer.Falling / In Air";
-    private const string AimIdleState = "Base Layer.Aim Idle";
-    private const string AimMoveState = "Base Layer.Aim Walk / Strafe";
-    private const string PrimaryAttackState = "Base Layer.Attack Placeholder";
-    private const string AbilityPrimaryState = "Base Layer.Ability Placeholder";
-    private const string AbilitySecondaryState = "Base Layer.Ability Secondary Placeholder";
-    private const string UltimateState = "Base Layer.Ultimate Placeholder";
-    private const string SlideState = "Base Layer.Slide Placeholder";
-    private const float ActionCrossFadeTime = 0.04f;
 
     private string currentAnimatorStatePath;
-    private float actionLockUntil;
 
     private void Awake()
     {
@@ -90,10 +75,6 @@ public class PlayerAnimationController : MonoBehaviour
         verticalVelocityHash = Animator.StringToHash("VerticalVelocity");
         jumpHash = Animator.StringToHash("Jump");
         landHash = Animator.StringToHash("Land");
-        primaryAttackHash = Animator.StringToHash("PrimaryAttack");
-        abilityPrimaryHash = Animator.StringToHash("AbilityPrimary");
-        abilitySecondaryHash = Animator.StringToHash("AbilitySecondary");
-        ultimateHash = Animator.StringToHash("Ultimate");
 
         if (animator != null)
         {
@@ -140,30 +121,14 @@ public class PlayerAnimationController : MonoBehaviour
             animator.SetTrigger(landHash);
         }
 
-        if (Time.time < actionLockUntil) return;
-
         UpdateLocomotionState();
     }
 
-    public void TriggerPrimaryAttack() => TriggerAction(primaryAttackHash, PrimaryAttackState);
-    public void TriggerAbilityPrimary() => TriggerAction(abilityPrimaryHash, AbilityPrimaryState);
-    public void TriggerAbilitySecondary() => TriggerAction(abilitySecondaryHash, AbilitySecondaryState);
-    public void TriggerUltimate() => TriggerAction(ultimateHash, UltimateState);
-    public void TriggerSlide() => TriggerAction(0, SlideState);
-
-    private void TriggerAction(int triggerHash, string stateName)
-    {
-        if (animator == null) return;
-
-        if (triggerHash != 0)
-        {
-            animator.SetTrigger(triggerHash);
-        }
-
-        animator.CrossFadeInFixedTime(stateName, ActionCrossFadeTime, 0, 0f);
-        currentAnimatorStatePath = stateName;
-        actionLockUntil = Time.time + actionLockSeconds;
-    }
+    public void TriggerPrimaryAttack() { }
+    public void TriggerAbilityPrimary() { }
+    public void TriggerAbilitySecondary() { }
+    public void TriggerUltimate() { }
+    public void TriggerSlide() { }
 
     private void UpdateLocomotionState()
     {
@@ -172,14 +137,6 @@ public class PlayerAnimationController : MonoBehaviour
         if (currentIsJumping)
         {
             targetState = JumpState;
-        }
-        else if (currentIsFalling)
-        {
-            targetState = FallingState;
-        }
-        else if (currentIsAiming)
-        {
-            targetState = currentSpeed > 0.1f ? AimMoveState : AimIdleState;
         }
         else if (currentIsSprinting)
         {
