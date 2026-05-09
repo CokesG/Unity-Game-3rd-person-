@@ -8,9 +8,9 @@ public class TPSReticleHUD : MonoBehaviour
     [SerializeField] private ThirdPersonCameraController cameraController;
     [SerializeField] private ThirdPersonMotor motor;
     [SerializeField] private bool showDebugReadout = true;
-    [SerializeField] private float spreadPixelMultiplier = 14f;
-    [SerializeField] private float minCrosshairGap = 8f;
-    [SerializeField] private float maxCrosshairGap = 56f;
+    [SerializeField] private float spreadPixelMultiplier = 9f;
+    [SerializeField] private float minCrosshairGap = 5f;
+    [SerializeField] private float maxCrosshairGap = 34f;
 
     private float hitmarkerTimer;
     private float hitDamage;
@@ -66,8 +66,8 @@ public class TPSReticleHUD : MonoBehaviour
         float cy = Screen.height * 0.5f;
         float spread = weaponController != null ? weaponController.CurrentSpreadDegrees : 0.5f;
         float gap = Mathf.Clamp(minCrosshairGap + spread * spreadPixelMultiplier, minCrosshairGap, maxCrosshairGap);
-        float length = 9f;
-        float thickness = 2f;
+        float length = 6f;
+        float thickness = 1.5f;
         bool blocked = cameraController != null && cameraController.IsMuzzleBlocked;
         Color color = blocked ? new Color(1f, 0.25f, 0.2f, 0.95f) : new Color(1f, 1f, 1f, 0.9f);
 
