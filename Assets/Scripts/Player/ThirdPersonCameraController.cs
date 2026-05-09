@@ -231,7 +231,7 @@ public class ThirdPersonCameraController : MonoBehaviour
             return true;
         }
 
-        selectedHit = default;
+        selectedHit = default(RaycastHit);
         return false;
     }
 

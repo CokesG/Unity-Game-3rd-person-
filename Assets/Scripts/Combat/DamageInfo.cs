@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public readonly struct DamageInfo
+public struct DamageInfo
 {
     public DamageInfo(float damage, Vector3 point, Vector3 normal, GameObject instigator, WeaponDefinition weapon, bool isCritical)
     {
