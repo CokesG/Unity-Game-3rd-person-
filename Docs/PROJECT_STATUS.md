@@ -31,8 +31,11 @@ The current visual is:
 Player
 - CharacterVisual
   - NightfallVanguard_Prototype       disabled, contains bad/mixed Meshy clips
-  - NightfallVanguard_ModelOnly       active, Humanoid, no imported animations
+  - NightfallVanguard_FullQuality     active wrapper, full-quality mesh, no imported animations
+    - NightfallVanguard_FullQuality_Rig
 ```
+
+The rig child's Animator is assigned but disabled until a verified idle/walk/run clip is added. This prevents Unity's Humanoid Animator evaluation from pulling the model below the capsule when no valid clip is present.
 
 ## Important Architecture Decision
 
@@ -79,4 +82,4 @@ Add animation clips back one by one, then verify:
 
 Combat should come after the character and locomotion visuals are stable.
 
-Do not bulk-assign the Meshy merged animation file again. The first animation pass should use only one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.
+Do not bulk-assign the Meshy merged animation file again. The first animation pass should enable the Animator only after adding one known-good idle clip, then one known-good walk, then one known-good run/jog, then jump.

@@ -98,6 +98,11 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsFalling = motor.IsFalling();
         currentMovementState = ResolveMovementState();
 
+        if (!animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
         animator.SetFloat(speedHash, currentSpeed, speedDampTime, Time.deltaTime);
         animator.SetFloat(movementXHash, currentMovementX, movementDampTime, Time.deltaTime);
         animator.SetFloat(movementYHash, currentMovementY, movementDampTime, Time.deltaTime);

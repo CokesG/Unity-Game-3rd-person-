@@ -13,7 +13,7 @@ Generated prototype Unity FBX:
 
 - `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Animated.fbx`
 - `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_Prototype_Optimized50k.fbx`
-- `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_NoAnimations.fbx`
+- `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`
 
 ## Blender Inspection
 
@@ -68,10 +68,11 @@ The `Animator` now lives on `NightfallVanguard_Prototype`, not on the empty `Cha
 
 Current scene choice:
 
-- The active scene uses `NightfallVanguard_ModelOnly_NoAnimations.fbx`.
+- The active scene uses `NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`.
 - The old animated prototype remains under `CharacterVisual`, but is disabled.
 - The clean FBX imports as Humanoid with `importAnimation = false`.
-- The clean visual has one active Animator using `Assets/Animations/PlayerHumanoid.controller`.
+- The clean visual is wrapped under `NightfallVanguard_FullQuality`.
+- The rig child has an Animator assigned to `Assets/Animations/PlayerHumanoid.controller`, but the Animator component is disabled until a verified idle clip is added.
 - `Animator.applyRootMotion` remains disabled.
 
 Why: the animated Meshy FBX contains many action clips in one file, including charge, roll, bow, slide, attack, swim, and locomotion takes. Some clips are mislabeled or unsuitable for direct locomotion, so the scene now uses a clean model-only character while we source or build reliable locomotion clips one at a time.
@@ -93,7 +94,7 @@ A decimated prototype export was created in Blender as an experiment:
 - Skinned mesh quality in scene: `Bone2`.
 - `updateWhenOffscreen`: false.
 
-This optimized mesh is now the base for the clean no-animation visual because it gives us a safer prototype size than the 197k-triangle source. It is still not final hero topology. Production optimization should use clean retopology instead of blunt decimation.
+This optimized mesh is no longer the active visual. It caused visible holes/artifacting in game view. The active clean visual uses the full-quality mesh for now, even though it is heavier. Production optimization should use clean retopology instead of blunt decimation.
 
 ## Animator Mapping
 

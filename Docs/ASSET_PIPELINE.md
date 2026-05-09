@@ -91,10 +91,12 @@ Current local Blender MCP setup:
 
 Current Nightfall Vanguard Blender findings:
 
-- Clean Unity visual export: `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_NoAnimations.fbx`.
+- Clean Unity visual export: `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`.
 - Source rig has 24 bones and is Unity Humanoid compatible.
 - Finger bones are not present, so hands will not support polished finger animation.
-- Optimized prototype mesh is about 50k triangles but still not production retopology.
+- Optimized prototype mesh is about 50k triangles, but it showed holes/artifacting and is not the active visual.
+- Active full-quality prototype mesh is about 197k triangles, which is heavy but visually safer until proper retopology.
+- The rig child's Animator is assigned but disabled until a known-good idle clip is added.
 - The merged Meshy animation file contains many actions and should not be wired to gameplay in bulk.
 
 ## Character Blueprint For This Project
