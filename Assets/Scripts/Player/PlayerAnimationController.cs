@@ -11,6 +11,9 @@ public class PlayerAnimationController : MonoBehaviour
     [Header("Damping")]
     [SerializeField] private float speedDampTime = 0.1f;
     [SerializeField] private float movementDampTime = 0.08f;
+    [SerializeField] private float locomotionCrossFadeTime = 0.12f;
+    [SerializeField] private float jumpCrossFadeTime = 0.06f;
+    [SerializeField] private float actionLockSeconds = 0.8f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -44,11 +47,22 @@ public class PlayerAnimationController : MonoBehaviour
     private int abilitySecondaryHash;
     private int ultimateHash;
 
+    private const string IdleState = "Base Layer.Idle";
+    private const string WalkState = "Base Layer.Walk";
+    private const string RunState = "Base Layer.Run/Jog";
+    private const string JumpState = "Base Layer.Jump Start";
+    private const string FallingState = "Base Layer.Falling / In Air";
+    private const string AimIdleState = "Base Layer.Aim Idle";
+    private const string AimMoveState = "Base Layer.Aim Walk / Strafe";
     private const string PrimaryAttackState = "Base Layer.Attack Placeholder";
     private const string AbilityPrimaryState = "Base Layer.Ability Placeholder";
     private const string AbilitySecondaryState = "Base Layer.Ability Secondary Placeholder";
     private const string UltimateState = "Base Layer.Ultimate Placeholder";
+    private const string SlideState = "Base Layer.Slide Placeholder";
     private const float ActionCrossFadeTime = 0.04f;
+
+    private string currentAnimatorStatePath;
+    private float actionLockUntil;
 
     private void Awake()
     {
@@ -117,25 +131,78 @@ public class PlayerAnimationController : MonoBehaviour
         if (motor.JumpedThisFrame())
         {
             animator.SetTrigger(jumpHash);
+            CrossFadeIfNeeded(JumpState, jumpCrossFadeTime);
+            return;
         }
 
         if (motor.LandedThisFrame())
         {
             animator.SetTrigger(landHash);
         }
+
+        if (Time.time < actionLockUntil) return;
+
+        UpdateLocomotionState();
     }
 
     public void TriggerPrimaryAttack() => TriggerAction(primaryAttackHash, PrimaryAttackState);
     public void TriggerAbilityPrimary() => TriggerAction(abilityPrimaryHash, AbilityPrimaryState);
     public void TriggerAbilitySecondary() => TriggerAction(abilitySecondaryHash, AbilitySecondaryState);
     public void TriggerUltimate() => TriggerAction(ultimateHash, UltimateState);
+    public void TriggerSlide() => TriggerAction(0, SlideState);
 
     private void TriggerAction(int triggerHash, string stateName)
     {
         if (animator == null) return;
 
-        animator.SetTrigger(triggerHash);
+        if (triggerHash != 0)
+        {
+            animator.SetTrigger(triggerHash);
+        }
+
         animator.CrossFadeInFixedTime(stateName, ActionCrossFadeTime, 0, 0f);
+        currentAnimatorStatePath = stateName;
+        actionLockUntil = Time.time + actionLockSeconds;
+    }
+
+    private void UpdateLocomotionState()
+    {
+        string targetState;
+
+        if (currentIsJumping)
+        {
+            targetState = JumpState;
+        }
+        else if (currentIsFalling)
+        {
+            targetState = FallingState;
+        }
+        else if (currentIsAiming)
+        {
+            targetState = currentSpeed > 0.1f ? AimMoveState : AimIdleState;
+        }
+        else if (currentIsSprinting)
+        {
+            targetState = RunState;
+        }
+        else if (currentSpeed > 0.1f)
+        {
+            targetState = WalkState;
+        }
+        else
+        {
+            targetState = IdleState;
+        }
+
+        CrossFadeIfNeeded(targetState, locomotionCrossFadeTime);
+    }
+
+    private void CrossFadeIfNeeded(string stateName, float fadeTime)
+    {
+        if (currentAnimatorStatePath == stateName) return;
+
+        animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
+        currentAnimatorStatePath = stateName;
     }
 
     private string ResolveMovementState()

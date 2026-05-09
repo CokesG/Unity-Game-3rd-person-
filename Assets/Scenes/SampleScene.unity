@@ -886,8 +886,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationController
   animator: {fileID: 0}
   characterVisual: {fileID: 0}
-  speedDampTime: 0.1
-  movementDampTime: 0.08
+  speedDampTime: 0.05
+  movementDampTime: 0.05
+  locomotionCrossFadeTime: 0.12
+  jumpCrossFadeTime: 0.06
+  actionLockSeconds: 0.8
   currentMovementState: 
   currentSpeed: 0
   currentMovementX: 0
@@ -912,8 +915,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonMotor
   walkSpeed: 2.5
   runSpeed: 5.5
-  sprintSpeed: 9
-  aimSpeed: 3
+  sprintSpeed: 5.5
+  aimSpeed: 2.4
   rotationSpeed: 15
   gravity: -9.81
   jumpHeight: 1.5

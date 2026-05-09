@@ -10,6 +10,7 @@ public class PlayerCombatHooks : MonoBehaviour
     private InputAction ability1Action;
     private InputAction ability2Action;
     private InputAction ultimateAction;
+    private InputAction slideAction;
     private InputAction interactAction;
     private PlayerAnimationController animationController;
 
@@ -26,12 +27,14 @@ public class PlayerCombatHooks : MonoBehaviour
         ability1Action = playerControls.FindAction("Ability1");
         ability2Action = playerControls.FindAction("Ability2");
         ultimateAction = playerControls.FindAction("Ultimate");
+        slideAction = playerControls.FindAction("Slide");
         interactAction = playerControls.FindAction("Interact");
 
         if (attackAction != null) { attackAction.started += OnAttack; attackAction.Enable(); }
         if (ability1Action != null) { ability1Action.started += OnAbility1; ability1Action.Enable(); }
         if (ability2Action != null) { ability2Action.started += OnAbility2; ability2Action.Enable(); }
         if (ultimateAction != null) { ultimateAction.started += OnUltimate; ultimateAction.Enable(); }
+        if (slideAction != null) { slideAction.started += OnSlide; slideAction.Enable(); }
         if (interactAction != null) { interactAction.started += OnInteract; interactAction.Enable(); }
     }
 
@@ -41,6 +44,7 @@ public class PlayerCombatHooks : MonoBehaviour
         if (ability1Action != null) ability1Action.started -= OnAbility1;
         if (ability2Action != null) ability2Action.started -= OnAbility2;
         if (ultimateAction != null) ultimateAction.started -= OnUltimate;
+        if (slideAction != null) slideAction.started -= OnSlide;
         if (interactAction != null) interactAction.started -= OnInteract;
     }
 
@@ -67,5 +71,12 @@ public class PlayerCombatHooks : MonoBehaviour
         animationController?.TriggerUltimate();
         Debug.Log("Ultimate Triggered");
     }
+
+    private void OnSlide(InputAction.CallbackContext context)
+    {
+        animationController?.TriggerSlide();
+        Debug.Log("Slide Triggered");
+    }
+
     private void OnInteract(InputAction.CallbackContext context) => Debug.Log("Interact Triggered");
 }

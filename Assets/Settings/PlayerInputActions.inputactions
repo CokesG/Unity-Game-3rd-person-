@@ -88,6 +88,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Slide",
+                    "type": "Button",
+                    "id": "45024287-37b3-41fb-8ec1-69b3b03f1ad1",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Interact",
                     "type": "Button",
                     "id": "d4259b96-90a7-4d40-9050-1ad63f6a4197",
@@ -293,6 +302,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Ultimate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "71938ed7-e02e-4583-b510-a9f9342c0d7d",
+                    "path": "<Keyboard>/leftCtrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Slide",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a83f0466-493d-49d2-b7ee-af4e158bb2fc",
+                    "path": "<Keyboard>/c",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Slide",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

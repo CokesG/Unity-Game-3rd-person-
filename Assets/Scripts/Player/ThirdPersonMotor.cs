@@ -7,7 +7,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [Header("Speeds")]
     [SerializeField] private float walkSpeed = 2.5f;
     [SerializeField] private float runSpeed = 5.5f;
-    [SerializeField] private float sprintSpeed = 9.0f;
+    [SerializeField] private float sprintSpeed = 5.5f;
     [SerializeField] private float aimSpeed = 3.0f;
     [SerializeField] private float rotationSpeed = 15f;
 
@@ -92,8 +92,7 @@ public class ThirdPersonMotor : MonoBehaviour
         }
         else
         {
-            // Simple walk/run threshold for controllers, or just run for WASD
-            currentSpeed = inputMag < 0.5f ? walkSpeed : runSpeed;
+            currentSpeed = walkSpeed;
         }
 
         if (inputMag < 0.01f) currentSpeed = 0;
