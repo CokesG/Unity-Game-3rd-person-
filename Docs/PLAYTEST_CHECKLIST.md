@@ -29,6 +29,7 @@ Full test gym:
 - Slide exits crouched.
 - Jump buffer catches near-landing input.
 - Coyote time catches just-after-ledge input.
+- Space spam cannot stack jumps or keep lifting the player upward.
 - Low ceiling prevents standing.
 
 ## Camera

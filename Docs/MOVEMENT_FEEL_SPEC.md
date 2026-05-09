@@ -17,6 +17,7 @@ The `Player` root remains controller-driven through `ThirdPersonMotor`. Root mot
 - Separate rotation speeds for normal movement, sprint, aim, and slide.
 - Coyote time.
 - Jump buffering.
+- Jump lock until the controller has been stably grounded again.
 - Slide input buffering.
 - Slide steering.
 - Low-ceiling stand checks.
@@ -45,6 +46,8 @@ Jump height: 1.5
 Gravity: -9.81
 Coyote time: 0.10s
 Jump buffer: 0.12s
+Post-jump ground lock: 0.18s
+Grounded jump reset: 0.08s
 Slide input buffer: 0.10s
 Slide start speed: 8.5
 Slide end speed: 3.0
@@ -63,6 +66,8 @@ Slide steer strength: 5
 - Slide exits to crouch.
 - Jump can trigger just after stepping off a ledge.
 - Jump can trigger if pressed just before landing.
+- Repeatedly pressing Space in the air does not stack jumps or climb upward.
+- Holding or spamming Space after takeoff does not allow another jump until the player has landed again.
 - Jump from crouch only happens when there is room to stand.
 - Aim movement faces camera forward and allows strafe.
 - Camera target lowers smoothly while crouching/sliding.
