@@ -2,7 +2,7 @@ using UnityEngine;
 
 public struct DamageInfo
 {
-    public DamageInfo(float damage, Vector3 point, Vector3 normal, GameObject instigator, WeaponDefinition weapon, bool isCritical)
+    public DamageInfo(float damage, Vector3 point, Vector3 normal, GameObject instigator, WeaponDefinition weapon, bool isCritical, int shotIndex)
     {
         Damage = damage;
         Point = point;
@@ -10,6 +10,7 @@ public struct DamageInfo
         Instigator = instigator;
         Weapon = weapon;
         IsCritical = isCritical;
+        ShotIndex = shotIndex;
     }
 
     public float Damage { get; }
@@ -18,6 +19,7 @@ public struct DamageInfo
     public GameObject Instigator { get; }
     public WeaponDefinition Weapon { get; }
     public bool IsCritical { get; }
+    public int ShotIndex { get; }
 }
 
 public interface IDamageable

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(PlayerInputHandler))]
 [RequireComponent(typeof(ThirdPersonMotor))]
@@ -21,14 +22,35 @@ public class PlayerWeaponController : MonoBehaviour
     [SerializeField] private Vector3 debugLastAimPoint;
     [SerializeField] private Vector3 debugLastHitPoint;
     [SerializeField] private string debugLastHitName;
+    [SerializeField] private int totalShotsFired;
+    [SerializeField] private int totalWorldHits;
+    [SerializeField] private int totalRegisteredHits;
+    [SerializeField] private int totalCriticalHits;
+    [SerializeField] private int totalMisses;
+    [SerializeField] private int totalBlockedShots;
+    [SerializeField] private float totalDamageDealt;
+    [SerializeField] private float lastDamageDealt;
+    [SerializeField] private bool lastShotRegistered;
+    [SerializeField] private bool lastShotCritical;
+    [SerializeField] private bool lastShotBlocked;
+    [SerializeField] private float lastHitDistance;
+    [SerializeField] private string lastRegisteredTargetName;
+    [SerializeField] private float metricsWindowSeconds = 5f;
 
     private PlayerInputHandler input;
     private ThirdPersonMotor motor;
     private WeaponDefinition runtimeFallbackWeapon;
     private float nextFireTime;
     private float reloadEndTime;
+    private float reloadStartTime;
+    private float reloadDuration;
     private float spreadAddDegrees;
     private float lastFireTime = -999f;
+    private float rollingDamageTotal;
+    private readonly Queue<float> recentShotTimes = new Queue<float>();
+    private readonly Queue<float> recentRegisteredHitTimes = new Queue<float>();
+    private readonly Queue<float> recentDamageTimes = new Queue<float>();
+    private readonly Queue<float> recentDamageAmounts = new Queue<float>();
 
     public WeaponDefinition ActiveWeapon => weapon != null ? weapon : GetRuntimeFallbackWeapon();
     public int CurrentAmmo => currentAmmo;
@@ -37,6 +59,44 @@ public class PlayerWeaponController : MonoBehaviour
     public bool MuzzleBlocked => muzzleBlocked;
     public float CurrentSpreadDegrees => currentSpreadDegrees;
     public string WeaponState => weaponState;
+    public float ReloadTimeRemaining => isReloading ? Mathf.Max(0f, reloadEndTime - Time.time) : 0f;
+    public float ReloadDuration => reloadDuration;
+    public float ReloadProgress01 => isReloading && reloadDuration > 0f ? Mathf.Clamp01((Time.time - reloadStartTime) / reloadDuration) : 1f;
+    public float FireCooldownRemaining => Mathf.Max(0f, nextFireTime - Time.time);
+    public float SpreadAddDegrees => spreadAddDegrees;
+    public int TotalShotsFired => totalShotsFired;
+    public int TotalWorldHits => totalWorldHits;
+    public int TotalRegisteredHits => totalRegisteredHits;
+    public int TotalCriticalHits => totalCriticalHits;
+    public int TotalMisses => totalMisses;
+    public int TotalBlockedShots => totalBlockedShots;
+    public float TotalDamageDealt => totalDamageDealt;
+    public float LastDamageDealt => lastDamageDealt;
+    public bool LastShotRegistered => lastShotRegistered;
+    public bool LastShotCritical => lastShotCritical;
+    public bool LastShotBlocked => lastShotBlocked;
+    public float LastHitDistance => lastHitDistance;
+    public string LastHitName => debugLastHitName;
+    public string LastRegisteredTargetName => lastRegisteredTargetName;
+    public float Accuracy01 => totalShotsFired > 0 ? totalRegisteredHits / (float)totalShotsFired : 0f;
+    public float WorldHitRate01 => totalShotsFired > 0 ? totalWorldHits / (float)totalShotsFired : 0f;
+    public float CriticalRate01 => totalRegisteredHits > 0 ? totalCriticalHits / (float)totalRegisteredHits : 0f;
+    public float RecentAccuracy01 => recentShotTimes.Count > 0 ? recentRegisteredHitTimes.Count / (float)recentShotTimes.Count : 0f;
+    public float RecentDps => metricsWindowSeconds > 0f ? rollingDamageTotal / metricsWindowSeconds : 0f;
+    public float ObservedRpm => metricsWindowSeconds > 0f ? recentShotTimes.Count / metricsWindowSeconds * 60f : 0f;
+    public float MetricsWindowSeconds => metricsWindowSeconds;
+    public float RawBodyDps => ActiveWeapon.bodyDamage * ActiveWeapon.fireRate / 60f;
+    public float SustainedBodyDps
+    {
+        get
+        {
+            WeaponDefinition activeWeapon = ActiveWeapon;
+            float shotInterval = activeWeapon.SecondsPerShot();
+            float magazineDamage = activeWeapon.bodyDamage * activeWeapon.magazineSize;
+            float cycleTime = (Mathf.Max(activeWeapon.magazineSize, 1) - 1) * shotInterval + activeWeapon.reloadTime;
+            return cycleTime > 0f ? magazineDamage / cycleTime : 0f;
+        }
+    }
 
     private void Awake()
     {
@@ -74,6 +134,7 @@ public class PlayerWeaponController : MonoBehaviour
     private void Update()
     {
         RecoverSpread(Time.deltaTime);
+        TrimRecentMetrics();
         UpdateReload();
         UpdateMuzzleBlockedPreview();
         HandleReloadInput();
@@ -160,13 +221,17 @@ public class PlayerWeaponController : MonoBehaviour
 
         bool empty = currentAmmo <= 0;
         isReloading = true;
-        reloadEndTime = Time.time + (empty ? ActiveWeapon.emptyReloadTime : ActiveWeapon.reloadTime);
+        reloadDuration = empty ? ActiveWeapon.emptyReloadTime : ActiveWeapon.reloadTime;
+        reloadStartTime = Time.time;
+        reloadEndTime = Time.time + reloadDuration;
         weaponState = empty ? "Empty Reload" : "Reload";
     }
 
     private void Fire(WeaponDefinition activeWeapon)
     {
         currentAmmo--;
+        totalShotsFired++;
+        TrackRecentShot();
         nextFireTime = Time.time + activeWeapon.SecondsPerShot();
         lastFireTime = Time.time;
         spreadAddDegrees = Mathf.Min(activeWeapon.maxSpreadAddDegrees, spreadAddDegrees + activeWeapon.spreadPerShot + activeWeapon.recoilSpreadAddDegrees);
@@ -332,29 +397,109 @@ public class PlayerWeaponController : MonoBehaviour
     {
         Vector3 endPoint = shotRay.GetPoint(activeWeapon.maxRange);
         debugLastHitName = string.Empty;
+        lastRegisteredTargetName = string.Empty;
+        lastDamageDealt = 0f;
+        lastShotRegistered = false;
+        lastShotCritical = false;
+        lastShotBlocked = muzzleBlocked;
+        if (muzzleBlocked)
+        {
+            totalBlockedShots++;
+        }
 
         if (didHit)
         {
+            totalWorldHits++;
             endPoint = shotHit.point;
             debugLastHitPoint = shotHit.point;
             debugLastHitName = shotHit.collider != null ? shotHit.collider.name : string.Empty;
+            lastHitDistance = shotHit.distance;
 
             bool critical = shotHit.collider != null && shotHit.collider.name.ToLowerInvariant().Contains("head");
             float damage = activeWeapon.EvaluateDamage(shotHit.distance, critical);
             IDamageable damageable = FindDamageable(shotHit.collider);
-            damageable?.ApplyDamage(new DamageInfo(damage, shotHit.point, shotHit.normal, gameObject, activeWeapon, critical));
-            TPSReticleHUD.NotifyHit(damageable != null, damage, critical);
-            SpawnImpactMarker(shotHit.point, shotHit.normal, damageable != null, critical);
+            bool registered = damageable != null;
+
+            if (registered)
+            {
+                damageable.ApplyDamage(new DamageInfo(damage, shotHit.point, shotHit.normal, gameObject, activeWeapon, critical, totalShotsFired));
+                totalRegisteredHits++;
+                if (critical)
+                {
+                    totalCriticalHits++;
+                }
+
+                totalDamageDealt += damage;
+                lastDamageDealt = damage;
+                lastShotRegistered = true;
+                lastShotCritical = critical;
+                lastRegisteredTargetName = shotHit.collider.GetComponentInParent<TargetDummy>() != null
+                    ? shotHit.collider.GetComponentInParent<TargetDummy>().name
+                    : debugLastHitName;
+                TrackRecentRegisteredHit();
+                TrackRecentDamage(damage);
+            }
+
+            TPSReticleHUD.NotifyHit(registered, damage, critical);
+            SpawnImpactMarker(shotHit.point, shotHit.normal, registered, critical);
         }
         else
         {
+            totalMisses++;
             debugLastHitPoint = endPoint;
+            lastHitDistance = activeWeapon.maxRange;
             TPSReticleHUD.NotifyHit(false, 0f, false);
         }
 
         if (drawDebugShots)
         {
             Debug.DrawLine(shotRay.origin, endPoint, didHit ? Color.yellow : Color.white, debugShotTime);
+        }
+    }
+
+    private void TrackRecentShot()
+    {
+        recentShotTimes.Enqueue(Time.time);
+        TrimRecentMetrics();
+    }
+
+    private void TrackRecentRegisteredHit()
+    {
+        recentRegisteredHitTimes.Enqueue(Time.time);
+        TrimRecentMetrics();
+    }
+
+    private void TrackRecentDamage(float damage)
+    {
+        recentDamageTimes.Enqueue(Time.time);
+        recentDamageAmounts.Enqueue(damage);
+        rollingDamageTotal += damage;
+        TrimRecentMetrics();
+    }
+
+    private void TrimRecentMetrics()
+    {
+        float cutoff = Time.time - Mathf.Max(metricsWindowSeconds, 0.01f);
+        TrimTimeQueue(recentShotTimes, cutoff);
+        TrimTimeQueue(recentRegisteredHitTimes, cutoff);
+
+        while (recentDamageTimes.Count > 0 && recentDamageTimes.Peek() < cutoff)
+        {
+            recentDamageTimes.Dequeue();
+            rollingDamageTotal -= recentDamageAmounts.Dequeue();
+        }
+
+        if (rollingDamageTotal < 0f)
+        {
+            rollingDamageTotal = 0f;
+        }
+    }
+
+    private static void TrimTimeQueue(Queue<float> queue, float cutoff)
+    {
+        while (queue.Count > 0 && queue.Peek() < cutoff)
+        {
+            queue.Dequeue();
         }
     }
 

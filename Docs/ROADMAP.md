@@ -17,6 +17,7 @@
 - Camera/aim V1 added: shoulder swap, aim ray, FOV states, recoil, and muzzle-blocked feedback hook.
 - Gunplay V1 added: data-driven prototype rifle, ammo/reload, hitscan, spread/recoil, target dummies, and reticle HUD.
 - Test gym builder added under `Tools > TPS > Create Test Gym Scene`.
+- Gun tuning debug V1 added behind `F1`: reload countdown, hit registration counters, critical hits, damage stacks, accuracy, DPS, RPM, spread, TTK, and per-target debug.
 
 ## Next
 
@@ -31,12 +32,13 @@
 ## After Character Locomotion
 
 1. Tune movement/camera/rifle values in the test gym.
-2. Replace runtime bootstrap with explicit prefab wiring once scene setup stabilizes.
-3. Add authored muzzle flash and weapon audio.
-4. Add combat placeholder animation.
-5. Add weapon or hand socket on the real humanoid.
-6. Add upper-body aim/fire/reload animation layer.
-7. Add combat state/cooldowns.
+2. Use the `F1` gun tuning overlay to validate rifle hit registration, reload timing, DPS, accuracy, critical-hit behavior, and blocked-muzzle cases.
+3. Replace runtime bootstrap with explicit prefab wiring once scene setup stabilizes.
+4. Add authored muzzle flash and weapon audio.
+5. Add combat placeholder animation.
+6. Add weapon or hand socket on the real humanoid.
+7. Add upper-body aim/fire/reload animation layer.
+8. Add combat state/cooldowns.
 
 ## Later
 

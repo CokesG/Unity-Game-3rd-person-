@@ -43,6 +43,19 @@ Next tuning session:
 4. Tune camera aim distance/FOV second.
 5. Tune rifle recoil/spread third.
 
+## 2026-05-09 - Gun Debug Overlay
+
+Implemented:
+
+- Live `F1` gun tuning overlay.
+- Shot counters: fired, world hits, registered target hits, crits, misses, and blocked shots.
+- Rolling accuracy, observed RPM, recent DPS, raw body DPS, sustained body DPS, and TTK estimates.
+- Reload countdown and progress readout.
+- Per-target current-life and session damage stacks.
+- Per-target registered hit, critical hit, defeat, and last-damage readouts.
+
+Use this pass to make tuning decisions based on measured behavior instead of feel alone.
+
 ## 2026-05-09 - Jump Stack Fix
 
 Implemented:

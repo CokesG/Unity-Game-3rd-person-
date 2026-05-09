@@ -53,6 +53,20 @@ Full test gym:
 - Cover blocks shots when the muzzle is behind it.
 - Reticle turns red when blocked.
 
+## Gun Debug Overlay
+
+- Press `F1` to show/hide the overlay.
+- Reload countdown decreases in real time while reloading.
+- Shots fired increments on every consumed shot.
+- Registered hits increments only when a target dummy receives damage.
+- World hits increments on geometry hits, including blocked muzzle shots into cover.
+- Misses increment only when the hitscan ray hits nothing.
+- Critical hits increment when shooting a collider named `Head_Critical`.
+- Total damage matches the sum of registered target damage.
+- Focus target shows current HP, current-life damage, session damage, hit count, crit count, defeats, and last damage.
+- Observed RPM is close to tuned RPM during sustained automatic fire.
+- Recent DPS changes while actively landing hits and decays after stopping.
+
 ## Report Format
 
 ```text

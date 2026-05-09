@@ -32,6 +32,7 @@ Phase 2 scaffolding is in place:
 - Movement feel V1 is implemented in `ThirdPersonMotor`.
 - Camera/aim V1 is implemented in `ThirdPersonCameraController`.
 - Prototype rifle, target dummy damage, reticle HUD, runtime bootstrap, and test gym builder scripts are in place.
+- Gun tuning debug V1 is implemented behind `F1` in Play mode. It shows reload countdown, reload progress, ammo, shot counts, registered target hits, world hits, misses, critical hits, blocked shots, accuracy, DPS, RPM, spread, TTK estimates, and per-target damage stacks.
 
 The current visual is:
 
@@ -78,10 +79,19 @@ Do not enable root motion unless the movement system is explicitly redesigned to
 - `PlayerCombatHooks.cs`: placeholder combat input hooks that fire Animator triggers.
 - `PlayerWeaponController.cs`: prototype rifle, ammo, reload, spread, recoil, hitscan, and muzzle obstruction.
 - `WeaponDefinition.cs`: data asset shape for weapon tuning.
-- `TargetDummy.cs`: simple damage target for gunplay testing.
-- `TPSReticleHUD.cs`: reticle, hitmarker, ammo/state readout, and blocked muzzle feedback.
+- `TargetDummy.cs`: damage target with current-life/session damage, registered hit, critical hit, defeat, and last-hit debug accounting.
+- `TPSReticleHUD.cs`: reticle, hitmarker, ammo/state readout, blocked muzzle feedback, and `F1` gun tuning overlay.
 - `TpsRuntimeBootstrap.cs`: adds prototype rifle/HUD/dummies at runtime if a scene has none.
 - `TpsTestGymBuilder.cs`: Unity editor menu for creating a graybox movement/gunplay test gym.
+
+## Play Mode Debug Controls
+
+- `F1`: toggle gun tuning debug overlay.
+- Left mouse: fire prototype rifle.
+- Right mouse: hold aim.
+- `R`: reload fallback.
+- `V` or middle mouse: shoulder swap fallback.
+- C / left Ctrl: crouch or slide depending on movement state.
 
 `PlayerAnimationController` now defaults to parameter-driving only. It does not force manual Animator state crossfades unless `driveAnimatorStateMachine` is explicitly enabled later after the controller has verified states and transitions.
 
