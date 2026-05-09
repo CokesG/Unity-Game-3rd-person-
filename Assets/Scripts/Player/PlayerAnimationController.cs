@@ -49,7 +49,7 @@ public class PlayerAnimationController : MonoBehaviour
 
     private const string IdleState = "Base Layer.Idle";
     private const string WalkState = "Base Layer.Walk";
-    private const string RunState = "Base Layer.Run/Jog";
+    private const string SprintState = "Base Layer.Sprint";
     private const string JumpState = "Base Layer.Jump Start";
     private const string FallingState = "Base Layer.Falling / In Air";
     private const string AimIdleState = "Base Layer.Aim Idle";
@@ -183,7 +183,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
         else if (currentIsSprinting)
         {
-            targetState = RunState;
+            targetState = SprintState;
         }
         else if (currentSpeed > 0.1f)
         {
