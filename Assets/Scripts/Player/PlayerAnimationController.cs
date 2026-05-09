@@ -44,6 +44,12 @@ public class PlayerAnimationController : MonoBehaviour
     private int abilitySecondaryHash;
     private int ultimateHash;
 
+    private const string PrimaryAttackState = "Base Layer.Attack Placeholder";
+    private const string AbilityPrimaryState = "Base Layer.Ability Placeholder";
+    private const string AbilitySecondaryState = "Base Layer.Ability Secondary Placeholder";
+    private const string UltimateState = "Base Layer.Ultimate Placeholder";
+    private const float ActionCrossFadeTime = 0.04f;
+
     private void Awake()
     {
         if (animator == null)
@@ -81,7 +87,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (animator == null) return;
 
@@ -119,10 +125,18 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
-    public void TriggerPrimaryAttack() => animator?.SetTrigger(primaryAttackHash);
-    public void TriggerAbilityPrimary() => animator?.SetTrigger(abilityPrimaryHash);
-    public void TriggerAbilitySecondary() => animator?.SetTrigger(abilitySecondaryHash);
-    public void TriggerUltimate() => animator?.SetTrigger(ultimateHash);
+    public void TriggerPrimaryAttack() => TriggerAction(primaryAttackHash, PrimaryAttackState);
+    public void TriggerAbilityPrimary() => TriggerAction(abilityPrimaryHash, AbilityPrimaryState);
+    public void TriggerAbilitySecondary() => TriggerAction(abilitySecondaryHash, AbilitySecondaryState);
+    public void TriggerUltimate() => TriggerAction(ultimateHash, UltimateState);
+
+    private void TriggerAction(int triggerHash, string stateName)
+    {
+        if (animator == null) return;
+
+        animator.SetTrigger(triggerHash);
+        animator.CrossFadeInFixedTime(stateName, ActionCrossFadeTime, 0, 0f);
+    }
 
     private string ResolveMovementState()
     {

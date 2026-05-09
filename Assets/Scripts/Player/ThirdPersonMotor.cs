@@ -14,8 +14,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [Header("Physics")]
     [SerializeField] private float gravity = -9.81f;
     [SerializeField] private float jumpHeight = 1.5f;
-    [SerializeField] private float groundCheckRadius = 0.3f;
-    [SerializeField] private Vector3 groundCheckOffset = new Vector3(0, 0.1f, 0);
+    [SerializeField] private float groundCheckRadius = 0.25f;
+    [SerializeField] private Vector3 groundCheckOffset = Vector3.zero;
     [SerializeField] private LayerMask groundMask;
 
     private CharacterController controller;
@@ -60,9 +60,10 @@ public class ThirdPersonMotor : MonoBehaviour
 
     private void CheckGrounded()
     {
-        // Robust ground check using sphere cast + CharacterController.isGrounded
-        Vector3 spherePos = transform.position + groundCheckOffset;
-        bool sphereHit = Physics.CheckSphere(spherePos, groundCheckRadius, groundMask, QueryTriggerInteraction.Ignore);
+        Vector3 capsuleFoot = transform.position + controller.center + Vector3.down * (controller.height * 0.5f);
+        Vector3 spherePos = capsuleFoot + Vector3.up * Mathf.Max(groundCheckRadius, 0.02f) + groundCheckOffset;
+        int mask = groundMask.value == 0 ? Physics.DefaultRaycastLayers : groundMask.value;
+        bool sphereHit = Physics.CheckSphere(spherePos, groundCheckRadius, mask, QueryTriggerInteraction.Ignore);
         
         wasGrounded = isGrounded;
         isGrounded = controller.isGrounded || sphereHit;
