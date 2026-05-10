@@ -15,6 +15,10 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float locomotionCrossFadeTime = 0.12f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
     [SerializeField] private bool driveAnimatorStateMachine;
+    [SerializeField] private bool walkClipPromoted = true;
+    [SerializeField] private bool runClipPromoted;
+    [SerializeField] private bool sprintClipPromoted;
+    [SerializeField] private bool jumpClipPromoted;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -65,12 +69,18 @@ public class PlayerAnimationController : MonoBehaviour
 
     private void Awake()
     {
-        if (animator == null)
+        Transform visualRoot = characterVisual != null && characterVisual.gameObject.activeInHierarchy
+            ? characterVisual
+            : transform.Find("CharacterVisual");
+
+        if (animator == null || !animator.gameObject.activeInHierarchy)
         {
-            animator = GetComponentInChildren<Animator>();
+            animator = visualRoot != null
+                ? visualRoot.GetComponentInChildren<Animator>(false)
+                : GetComponentInChildren<Animator>(false);
         }
 
-        if (characterVisual == null && animator != null)
+        if ((characterVisual == null || !characterVisual.gameObject.activeInHierarchy) && animator != null)
         {
             characterVisual = animator.transform;
         }
@@ -145,8 +155,11 @@ public class PlayerAnimationController : MonoBehaviour
         if (motor.JumpedThisFrame())
         {
             SetTriggerIfAvailable(jumpHash);
-            CrossFadeIfNeeded(JumpState, jumpCrossFadeTime);
-            return;
+            if (jumpClipPromoted)
+            {
+                CrossFadeIfNeeded(JumpState, jumpCrossFadeTime);
+                return;
+            }
         }
 
         if (motor.LandedThisFrame())
@@ -170,19 +183,19 @@ public class PlayerAnimationController : MonoBehaviour
     {
         string targetState;
 
-        if (currentIsJumping)
+        if (currentIsJumping && jumpClipPromoted)
         {
             targetState = JumpState;
         }
-        else if (currentIsSprinting)
+        else if (currentIsSprinting && sprintClipPromoted)
         {
             targetState = SprintState;
         }
-        else if (currentSpeed > 3.5f)
+        else if (currentSpeed > 3.5f && runClipPromoted)
         {
             targetState = RunState;
         }
-        else if (currentSpeed > 0.1f)
+        else if (currentSpeed > 0.1f && walkClipPromoted)
         {
             targetState = WalkState;
         }

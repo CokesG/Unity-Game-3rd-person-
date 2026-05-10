@@ -1,10 +1,20 @@
 # Nightfall Animation Linking
 
-Last updated: 2026-05-09
+Last updated: 2026-05-10
 
 ## What Was Added
 
 The new Meshy animation GLBs were used as source files and cloned into native Unity `.anim` clips.
+
+Current live promotion:
+
+- `Idle` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Idle_Baked.fbx`.
+- The baked clip is named `Nightfall_FullQuality_Idle_Baked`.
+- `Walk` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`.
+- The baked clip is named `Nightfall_FullQuality_Walk_Baked`.
+- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45` and the baked walk clip for `Walk` at speed `1.0`.
+- The live `PlayerAnimationController` has code-driven state switching enabled, but only `walkClipPromoted` is true. Until run/sprint are promoted, all grounded movement uses the walk animation.
+- Run, sprint, jump, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
 
 Source folder:
 
@@ -48,8 +58,25 @@ Current finding:
 - Their binding paths start with `Armature/Hips/...`.
 - The current full-quality FBX rig used in the live Player has a different armature object name.
 - The linked sandbox scene uses the existing full-quality FBX model but renames the sandbox instance armature to `Armature`, so the cloned GLB clips can bind correctly.
+- The raw GLB `.anim` clips must not be assigned directly to the live `PlayerHumanoid.controller`. They can deform or stretch the full-quality mesh because they animate transform paths from the source GLB skeleton instead of using Unity Humanoid Avatar retargeting.
 
 Do not assign these clips directly to the live Player until they are reviewed in the sandbox.
+
+## Unity Retargeting Rule
+
+Unity's Humanoid retargeting workflow depends on valid Humanoid Avatars, not matching raw transform path names. The source animation and destination character need properly configured Avatars so Unity can map the source humanoid pose onto the target humanoid skeleton.
+
+Official Unity references:
+
+- Humanoid retargeting requires humanoid models with configured Avatars: https://docs.unity.cn/6000.1/Documentation/Manual/Retargeting.html
+- Separate animation files should use `Rig > Animation Type: Humanoid`, and can use `Avatar Definition: Copy From Other Avatar` when they share the same skeleton as the model: https://docs.unity.cn/2022.1/Documentation/Manual/ConfiguringtheAvatar.html
+- Unity's Avatar system is what maps humanoid body parts so animation can move between characters: https://docs.unity.cn/Manual/AvatarCreationandSetup.html
+
+Practical rule for this project:
+
+- Sandbox GLB clips are preview-only until baked/retargeted.
+- The live Player should use Humanoid FBX clips or baked clips exported specifically for `NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`.
+- Do not rename live skeleton bones to force raw `.anim` binding. That can make the mesh explode.
 
 ## Clip Mapping
 
@@ -130,4 +157,3 @@ After a clip passes sandbox review:
 5. Test `SampleScene` movement after each promoted clip.
 
 If the live full-quality rig cannot play these clips cleanly, use Blender to normalize the rig and animation paths or export FBX animation clips against a matching skeleton.
-

@@ -5,10 +5,10 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     [SerializeField] private Camera previewCamera;
+    [SerializeField] private Transform previewTarget;
     [SerializeField] private float crossFadeTime = 0.12f;
-    [SerializeField] private float previewCameraDistance = 4.25f;
-    [SerializeField] private float previewCameraHeightOffset = 0.25f;
-    [SerializeField] private float previewCameraLookOffset = 0.15f;
+    [SerializeField] private Vector3 previewTargetOffset = new Vector3(0f, 1.05f, 0f);
+    [SerializeField] private Vector3 previewCameraOffset = new Vector3(0f, 1.35f, -4.25f);
     [SerializeField] private float previewCameraFieldOfView = 35f;
     [SerializeField] private bool showHud = true;
     [SerializeField] private int currentStateIndex;
@@ -125,7 +125,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private void FramePreviewCamera()
     {
-        if (previewCamera == null || !TryGetVisibleBounds(out Bounds bounds))
+        if (previewCamera == null)
         {
             return;
         }
@@ -134,39 +134,26 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         previewCamera.depth = 100f;
         previewCamera.fieldOfView = previewCameraFieldOfView;
 
-        Vector3 lookTarget = bounds.center + Vector3.up * previewCameraLookOffset;
-        float distance = Mathf.Max(previewCameraDistance, bounds.extents.y * 4.2f, bounds.extents.magnitude * 2.1f);
-        Vector3 cameraPosition = lookTarget + new Vector3(0f, previewCameraHeightOffset, -distance);
+        Vector3 origin = GetPreviewOrigin();
+        Vector3 lookTarget = origin + previewTargetOffset;
+        Vector3 cameraPosition = origin + previewCameraOffset;
+        Vector3 lookDirection = lookTarget - cameraPosition;
 
         previewCamera.transform.position = cameraPosition;
-        previewCamera.transform.LookAt(lookTarget);
+        if (lookDirection.sqrMagnitude > 0.0001f)
+        {
+            previewCamera.transform.rotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+        }
     }
 
-    private bool TryGetVisibleBounds(out Bounds bounds)
+    private Vector3 GetPreviewOrigin()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
-        bool hasBounds = false;
-        bounds = new Bounds(transform.position + Vector3.up, Vector3.one);
-
-        foreach (Renderer renderer in renderers)
+        if (previewTarget != null)
         {
-            if (!renderer.enabled || !renderer.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            if (!hasBounds)
-            {
-                bounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
+            return previewTarget.position;
         }
 
-        return hasBounds;
+        return animator != null ? animator.transform.position : transform.position;
     }
 
     private void OnGUI()
@@ -178,7 +165,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
         GUI.Label(new Rect(24f, 24f, 520f, 24f), "Nightfall Animation Sandbox");
         GUI.Label(new Rect(24f, 48f, 780f, 24f), "1 Idle | 2 Walk | 3 Run | 4 Sprint | 5 Jump | 6 Aim | 7 Slide | 8 Attack | 9 Ability | 0 Roll");
-        GUI.Label(new Rect(24f, 72f, 780f, 24f), "Tab / Space / Right Arrow next | Left Arrow previous | F frame camera");
+        GUI.Label(new Rect(24f, 72f, 780f, 24f), "Tab / Space / Right Arrow next | Left Arrow previous | F reset camera");
         GUI.Label(new Rect(24f, 96f, 520f, 24f), "Current: " + currentState);
     }
 }

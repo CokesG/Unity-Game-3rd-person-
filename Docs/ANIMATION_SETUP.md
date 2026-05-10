@@ -6,7 +6,12 @@ Current controller:
 
 `Assets/Animations/PlayerHumanoid.controller`
 
-Assign this controller to the live Player visual only after clips are verified in the sandbox.
+The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle` and `Walk` are promoted to the live controller:
+
+- `Idle`: `Nightfall_FullQuality_Idle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Idle_Baked.fbx`
+- `Walk`: `Nightfall_FullQuality_Walk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`
+
+Assign additional clips to the live Player visual only after clips are verified in the sandbox and confirmed to be compatible with the live full-quality rig.
 
 Keep `Apply Root Motion` disabled.
 
@@ -90,9 +95,11 @@ Drop clips into matching states or blend tree slots in the sandbox first:
 - `Attack Placeholder`: first basic attack clip
 - `Ability Placeholder`: temporary ability animation
 
-Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing.
+Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing and are Humanoid-retargeted or baked for the live full-quality rig. A raw GLB `.anim` clip that looks good in the linked sandbox is not automatically safe for the live Player.
 
 The live `PlayerAnimationController` is parameter-driven by default. Leave `driveAnimatorStateMachine` disabled until the Animator transitions or blend trees are intentionally built.
+
+Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. Only `walkClipPromoted` is true, so all grounded WASD movement uses `Walk` until run/sprint are intentionally promoted.
 
 ## Import Settings
 
@@ -109,6 +116,12 @@ For separate animation FBXs:
 - Source Avatar: the character model avatar
 - Animation > Loop Time: enabled for idle, walk, run, sprint, aim idle, and strafe loops.
 - Animation > Loop Time: usually disabled for jump start, landing, attack, and one-shot abilities.
+
+For raw Meshy GLB animation clips:
+
+- Treat the linked sandbox as preview only.
+- Do not assign copied GLB `.anim` clips directly to `PlayerHumanoid.controller`.
+- Bake or retarget them to the full-quality rig first, preferably through a Humanoid FBX workflow.
 
 ## Testing
 
