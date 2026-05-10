@@ -13,8 +13,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float rotationSpeed = 15f;
 
     [Header("Feel")]
-    [SerializeField] private float normalAcceleration = 34f;
-    [SerializeField] private float sprintAcceleration = 42f;
+    [SerializeField] private float normalAcceleration = 22f;
+    [SerializeField] private float sprintAcceleration = 34f;
     [SerializeField] private float aimAcceleration = 28f;
     [SerializeField] private float groundDeceleration = 46f;
     [SerializeField] private float airAcceleration = 10f;
@@ -52,6 +52,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private string currentMovementMode;
     [SerializeField] private bool debugIsCrouching;
     [SerializeField] private bool debugIsSliding;
+    [SerializeField] private bool debugIsSlowWalking;
     [SerializeField] private float debugCurrentSpeed;
     [SerializeField] private float debugDesiredSpeed;
     [SerializeField] private float debugCoyoteTimer;
@@ -75,6 +76,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private bool isGrounded;
     private bool wasGrounded;
     private bool isSprinting;
+    private bool isSlowWalking;
     private bool jumpedThisFrame;
     private bool landedThisFrame;
     private bool hasJumpedSinceGrounded;
@@ -277,6 +279,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private Vector3 BuildTargetHorizontalVelocity()
     {
         float inputMagnitude = Mathf.Clamp01(input.MoveInput.magnitude);
+        isSlowWalking = CanSlowWalk(inputMagnitude);
         isSprinting = CanSprint(inputMagnitude);
         desiredSpeed = ResolveDesiredSpeed(inputMagnitude);
 
@@ -312,6 +315,7 @@ public class ThirdPersonMotor : MonoBehaviour
         if (input.AimPressed) return aimSpeed;
         if (wantsToCrouch) return crouchSpeed;
         if (isSprinting) return sprintSpeed;
+        if (isSlowWalking) return walkSpeed * inputMagnitude;
 
         return Mathf.Lerp(walkSpeed, runSpeed, inputMagnitude);
     }
@@ -458,8 +462,17 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         return !input.AimPressed
             && !wantsToCrouch
+            && !input.SlowWalkPressed
             && input.SprintPressed
             && input.MoveInput.y > 0.1f
+            && inputMagnitude > 0.01f;
+    }
+
+    private bool CanSlowWalk(float inputMagnitude)
+    {
+        return !input.AimPressed
+            && !wantsToCrouch
+            && input.SlowWalkPressed
             && inputMagnitude > 0.01f;
     }
 
@@ -468,6 +481,7 @@ public class ThirdPersonMotor : MonoBehaviour
         float inputMagnitude = Mathf.Clamp01(input.MoveInput.magnitude);
         bool sprintIntent = !input.AimPressed
             && !wantsToCrouch
+            && !input.SlowWalkPressed
             && input.SprintPressed
             && input.MoveInput.y > 0.4f
             && inputMagnitude > 0.01f;
@@ -566,6 +580,7 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         debugIsCrouching = IsCrouching();
         debugIsSliding = isSliding;
+        debugIsSlowWalking = isSlowWalking;
         debugCurrentSpeed = currentSpeed;
         debugDesiredSpeed = desiredSpeed;
         debugCoyoteTimer = coyoteTimer;
@@ -586,13 +601,14 @@ public class ThirdPersonMotor : MonoBehaviour
         else if (input.AimPressed) currentMovementMode = currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
         else if (!isGrounded) currentMovementMode = verticalVelocity.y > 0f ? "Jumping" : "Falling";
         else if (isSprinting) currentMovementMode = "Sprint";
-        else if (currentSpeed > walkSpeed + 0.1f) currentMovementMode = "Run";
-        else if (currentSpeed > 0.1f) currentMovementMode = "Walk";
+        else if (isSlowWalking) currentMovementMode = "Slow Walk";
+        else if (currentSpeed > 0.1f) currentMovementMode = "Run";
         else currentMovementMode = "Idle";
     }
 
     public bool IsGrounded() => isGrounded;
     public bool IsSprinting() => isSprinting;
+    public bool IsSlowWalking() => isSlowWalking;
     public bool IsAiming() => input != null && input.AimPressed;
     public bool IsCrouching() => wantsToCrouch || isSliding;
     public bool IsSliding() => isSliding;

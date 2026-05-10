@@ -1094,13 +1094,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationController
   animator: {fileID: 661615599}
   characterVisual: {fileID: 1186776457}
-  speedDampTime: 0.05
-  movementDampTime: 0.05
-  locomotionCrossFadeTime: 0.12
+  speedDampTime: 0.14
+  movementDampTime: 0.1
+  locomotionCrossFadeTime: 0.18
   jumpCrossFadeTime: 0.06
   driveAnimatorStateMachine: 1
   walkClipPromoted: 1
-  runClipPromoted: 0
+  runClipPromoted: 1
   sprintClipPromoted: 0
   jumpClipPromoted: 0
   currentMovementState: 
@@ -1111,10 +1111,12 @@ MonoBehaviour:
   currentIsGrounded: 0
   currentIsAiming: 0
   currentIsSprinting: 0
+  currentIsSlowWalking: 0
   currentIsJumping: 0
   currentIsFalling: 0
   currentIsCrouching: 0
   currentIsSliding: 0
+  currentUsesRunVisual: 0
 --- !u!114 &951686970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1133,8 +1135,8 @@ MonoBehaviour:
   aimSpeed: 3
   crouchSpeed: 2
   rotationSpeed: 15
-  normalAcceleration: 34
-  sprintAcceleration: 42
+  normalAcceleration: 22
+  sprintAcceleration: 34
   aimAcceleration: 28
   groundDeceleration: 46
   airAcceleration: 10
@@ -1168,6 +1170,7 @@ MonoBehaviour:
   currentMovementMode: 
   debugIsCrouching: 0
   debugIsSliding: 0
+  debugIsSlowWalking: 0
   debugCurrentSpeed: 0
   debugDesiredSpeed: 0
   debugCoyoteTimer: 0
@@ -1196,12 +1199,14 @@ MonoBehaviour:
   lookActionName: Look
   jumpActionName: Jump
   sprintActionName: Sprint
+  slowWalkActionName: SlowWalk
   aimActionName: Aim
   attackActionName: Attack
   reloadActionName: Reload
   shoulderSwapActionName: ShoulderSwap
   crouchActionName: Crouch
   crouchFallbackActionName: Slide
+  slowWalkFallbackToCtrl: 1
 --- !u!143 &951686972
 CharacterController:
   m_ObjectHideFlags: 0

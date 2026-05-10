@@ -12,9 +12,12 @@ Current live promotion:
 - The baked clip is named `Nightfall_FullQuality_Idle_Baked`.
 - `Walk` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`.
 - The baked clip is named `Nightfall_FullQuality_Walk_Baked`.
-- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45` and the baked walk clip for `Walk` at speed `1.0`.
-- The live `PlayerAnimationController` has code-driven state switching enabled, but only `walkClipPromoted` is true. Until run/sprint are promoted, all grounded movement uses the walk animation.
-- Run, sprint, jump, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
+- `Run/Jog` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`.
+- The baked clip is named `Nightfall_FullQuality_Run_Baked`.
+- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45`, the baked walk clip for `Walk` at speed `1.0`, and the baked run clip for `Run/Jog` at speed `1.0`.
+- The live `PlayerAnimationController` has code-driven state switching enabled with `walkClipPromoted` and `runClipPromoted` true. Normal grounded WASD movement uses `Run/Jog`; Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted.
+- The locomotion feel is intentionally shooter-style default run/jog instead of keyboard walk-to-run gating. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
+- Sprint, jump, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
 
 Source folder:
 

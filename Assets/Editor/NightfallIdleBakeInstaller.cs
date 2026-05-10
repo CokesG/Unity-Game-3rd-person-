@@ -10,7 +10,7 @@ public static class NightfallIdleBakeInstaller
 {
     private const string TargetModelPath = "Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx";
     private const string ControllerPath = "Assets/Animations/PlayerHumanoid.controller";
-    private const string InstallMarkerPath = "Library/Codex/nightfall_promoted_locomotion_v2.txt";
+    private const string InstallMarkerPath = "Library/Codex/nightfall_promoted_locomotion_v3.txt";
 
     private static readonly ClipSpec[] PromotedClips =
     {
@@ -23,6 +23,11 @@ public static class NightfallIdleBakeInstaller
             "Walk",
             "Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx",
             "Nightfall_FullQuality_Walk_Baked",
+            1.0f),
+        new ClipSpec(
+            "Run/Jog",
+            "Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx",
+            "Nightfall_FullQuality_Run_Baked",
             1.0f),
     };
 
@@ -76,12 +81,7 @@ public static class NightfallIdleBakeInstaller
                 return;
             }
 
-            AnimatorState state = FindState(controller, spec.StateName);
-            if (state == null)
-            {
-                Debug.LogError($"Nightfall promoted locomotion install failed: state {spec.StateName} not found in PlayerHumanoid.controller");
-                return;
-            }
+            AnimatorState state = FindOrCreateState(controller, spec.StateName);
 
             state.motion = clip;
             state.speed = spec.StateSpeed;
@@ -109,9 +109,12 @@ public static class NightfallIdleBakeInstaller
         if (player != null && player.TryGetComponent(out PlayerAnimationController animationController))
         {
             var serializedController = new SerializedObject(animationController);
+            SetFloat(serializedController, "speedDampTime", 0.14f);
+            SetFloat(serializedController, "movementDampTime", 0.1f);
+            SetFloat(serializedController, "locomotionCrossFadeTime", 0.18f);
             SetBool(serializedController, "driveAnimatorStateMachine", true);
             SetBool(serializedController, "walkClipPromoted", true);
-            SetBool(serializedController, "runClipPromoted", false);
+            SetBool(serializedController, "runClipPromoted", true);
             SetBool(serializedController, "sprintClipPromoted", false);
             SetBool(serializedController, "jumpClipPromoted", false);
             serializedController.ApplyModifiedPropertiesWithoutUndo();
@@ -142,6 +145,15 @@ public static class NightfallIdleBakeInstaller
         }
     }
 
+    private static void SetFloat(SerializedObject serializedObject, string propertyName, float value)
+    {
+        SerializedProperty property = serializedObject.FindProperty(propertyName);
+        if (property != null)
+        {
+            property.floatValue = value;
+        }
+    }
+
     private static Avatar LoadAvatar(string modelPath)
     {
         return AssetDatabase
@@ -156,6 +168,24 @@ public static class NightfallIdleBakeInstaller
             .SelectMany(layer => layer.stateMachine.states)
             .Select(childState => childState.state)
             .FirstOrDefault(state => state.name == stateName);
+    }
+
+    private static AnimatorState FindOrCreateState(AnimatorController controller, string stateName)
+    {
+        AnimatorState existing = FindState(controller, stateName);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
+        Vector3 position = stateName == "Run/Jog"
+            ? new Vector3(310f, 40f, 0f)
+            : new Vector3(500f, 120f, 0f);
+        AnimatorState created = stateMachine.AddState(stateName, position);
+        EditorUtility.SetDirty(stateMachine);
+        EditorUtility.SetDirty(created);
+        return created;
     }
 
     private static void ConfigureBakedClipImporter(ClipSpec spec, Avatar targetAvatar)

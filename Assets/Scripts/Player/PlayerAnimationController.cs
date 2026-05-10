@@ -10,9 +10,9 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private Transform characterVisual;
 
     [Header("Damping")]
-    [SerializeField] private float speedDampTime = 0.1f;
-    [SerializeField] private float movementDampTime = 0.08f;
-    [SerializeField] private float locomotionCrossFadeTime = 0.12f;
+    [SerializeField] private float speedDampTime = 0.14f;
+    [SerializeField] private float movementDampTime = 0.1f;
+    [SerializeField] private float locomotionCrossFadeTime = 0.18f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
     [SerializeField] private bool driveAnimatorStateMachine;
     [SerializeField] private bool walkClipPromoted = true;
@@ -29,10 +29,12 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool currentIsGrounded;
     [SerializeField] private bool currentIsAiming;
     [SerializeField] private bool currentIsSprinting;
+    [SerializeField] private bool currentIsSlowWalking;
     [SerializeField] private bool currentIsJumping;
     [SerializeField] private bool currentIsFalling;
     [SerializeField] private bool currentIsCrouching;
     [SerializeField] private bool currentIsSliding;
+    [SerializeField] private bool currentUsesRunVisual;
 
     private ThirdPersonMotor motor;
     private PlayerInputHandler input;
@@ -126,10 +128,12 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsGrounded = motor.IsGrounded();
         currentIsAiming = input.AimPressed;
         currentIsSprinting = motor.IsSprinting();
+        currentIsSlowWalking = motor.IsSlowWalking();
         currentIsJumping = motor.IsJumping();
         currentIsFalling = motor.IsFalling();
         currentIsCrouching = motor.IsCrouching();
         currentIsSliding = motor.IsSliding();
+        currentUsesRunVisual = ShouldUseRunState();
         currentMovementState = ResolveMovementState();
 
         if (!animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
@@ -191,7 +195,11 @@ public class PlayerAnimationController : MonoBehaviour
         {
             targetState = SprintState;
         }
-        else if (currentSpeed > 3.5f && runClipPromoted)
+        else if (ShouldUseWalkState())
+        {
+            targetState = walkClipPromoted ? WalkState : IdleState;
+        }
+        else if (ShouldUseRunState())
         {
             targetState = RunState;
         }
@@ -205,6 +213,24 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         CrossFadeIfNeeded(targetState, locomotionCrossFadeTime);
+    }
+
+    private bool ShouldUseWalkState()
+    {
+        return currentSpeed > 0.1f
+            && walkClipPromoted
+            && (currentIsSlowWalking || currentIsAiming || currentIsCrouching);
+    }
+
+    private bool ShouldUseRunState()
+    {
+        return currentSpeed > 0.1f
+            && runClipPromoted
+            && currentIsGrounded
+            && !currentIsAiming
+            && !currentIsCrouching
+            && !currentIsSliding
+            && !currentIsSlowWalking;
     }
 
     private void CrossFadeIfNeeded(string stateName, float fadeTime)
@@ -277,8 +303,9 @@ public class PlayerAnimationController : MonoBehaviour
         if (currentIsAiming) return currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
         if (currentIsJumping) return "Jumping";
         if (currentIsFalling) return "Falling";
-        if (currentIsSprinting) return "Sprinting";
-        if (currentSpeed > 3.5f) return "Running";
+        if (currentIsSprinting) return sprintClipPromoted ? "Sprinting" : "Sprint Speed / Run Visual";
+        if (currentIsSlowWalking) return "Slow Walking";
+        if (currentUsesRunVisual) return "Running";
         if (currentSpeed > 0.1f) return "Walking";
         return "Idle";
     }

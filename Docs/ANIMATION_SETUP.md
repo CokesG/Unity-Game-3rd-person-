@@ -6,10 +6,11 @@ Current controller:
 
 `Assets/Animations/PlayerHumanoid.controller`
 
-The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle` and `Walk` are promoted to the live controller:
+The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle`, `Walk`, and `Run/Jog` are promoted to the live controller:
 
 - `Idle`: `Nightfall_FullQuality_Idle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Idle_Baked.fbx`
 - `Walk`: `Nightfall_FullQuality_Walk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`
+- `Run/Jog`: `Nightfall_FullQuality_Run_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`
 
 Assign additional clips to the live Player visual only after clips are verified in the sandbox and confirmed to be compatible with the live full-quality rig.
 
@@ -99,7 +100,9 @@ Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing
 
 The live `PlayerAnimationController` is parameter-driven by default. Leave `driveAnimatorStateMachine` disabled until the Animator transitions or blend trees are intentionally built.
 
-Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. Only `walkClipPromoted` is true, so all grounded WASD movement uses `Walk` until run/sprint are intentionally promoted.
+Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal grounded WASD movement uses `Run/Jog`, while Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted. Sprint and jump are still intentionally unpromoted.
+
+Default movement is intentionally run/jog for shooter feel. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
 
 ## Import Settings
 

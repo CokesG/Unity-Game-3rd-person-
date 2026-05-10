@@ -11,17 +11,20 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string lookActionName = "Look";
     [SerializeField] private string jumpActionName = "Jump";
     [SerializeField] private string sprintActionName = "Sprint";
+    [SerializeField] private string slowWalkActionName = "SlowWalk";
     [SerializeField] private string aimActionName = "Aim";
     [SerializeField] private string attackActionName = "Attack";
     [SerializeField] private string reloadActionName = "Reload";
     [SerializeField] private string shoulderSwapActionName = "ShoulderSwap";
     [SerializeField] private string crouchActionName = "Crouch";
     [SerializeField] private string crouchFallbackActionName = "Slide";
+    [SerializeField] private bool slowWalkFallbackToCtrl = true;
 
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
+    private InputAction slowWalkAction;
     private InputAction aimAction;
     private InputAction attackAction;
     private InputAction reloadAction;
@@ -32,6 +35,7 @@ public class PlayerInputHandler : MonoBehaviour
     public Vector2 LookInput { get; private set; }
     public bool JumpTriggered { get; private set; }
     public bool SprintPressed { get; private set; }
+    public bool SlowWalkPressed { get; private set; }
     public bool AimPressed { get; private set; }
     public bool AttackPressed { get; private set; }
     public bool AttackTriggered { get; private set; }
@@ -48,6 +52,7 @@ public class PlayerInputHandler : MonoBehaviour
         lookAction = playerControls.FindAction(lookActionName);
         jumpAction = playerControls.FindAction(jumpActionName);
         sprintAction = playerControls.FindAction(sprintActionName);
+        slowWalkAction = playerControls.FindAction(slowWalkActionName);
         aimAction = playerControls.FindAction(aimActionName);
         attackAction = playerControls.FindAction(attackActionName);
         reloadAction = playerControls.FindAction(reloadActionName);
@@ -58,6 +63,7 @@ public class PlayerInputHandler : MonoBehaviour
         lookAction?.Enable();
         jumpAction?.Enable();
         sprintAction?.Enable();
+        slowWalkAction?.Enable();
         aimAction?.Enable();
         attackAction?.Enable();
         reloadAction?.Enable();
@@ -71,6 +77,7 @@ public class PlayerInputHandler : MonoBehaviour
         lookAction?.Disable();
         jumpAction?.Disable();
         sprintAction?.Disable();
+        slowWalkAction?.Disable();
         aimAction?.Disable();
         attackAction?.Disable();
         reloadAction?.Disable();
@@ -85,6 +92,12 @@ public class PlayerInputHandler : MonoBehaviour
         
         if (jumpAction != null) JumpTriggered = jumpAction.triggered;
         if (sprintAction != null) SprintPressed = sprintAction.IsPressed();
+        SlowWalkPressed = slowWalkAction != null && slowWalkAction.IsPressed();
+        if (!SlowWalkPressed && slowWalkFallbackToCtrl && Keyboard.current != null)
+        {
+            SlowWalkPressed = Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.rightCtrlKey.isPressed;
+        }
+
         if (aimAction != null) AimPressed = aimAction.IsPressed();
         if (attackAction != null)
         {
