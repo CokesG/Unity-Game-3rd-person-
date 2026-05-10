@@ -12,12 +12,27 @@ Current live promotion:
 - The baked clip is named `Nightfall_FullQuality_Idle_Baked`.
 - `Walk` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`.
 - The baked clip is named `Nightfall_FullQuality_Walk_Baked`.
-- `Run/Jog` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`.
+- `Run` is now baked through Blender into `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`.
 - The baked clip is named `Nightfall_FullQuality_Run_Baked`.
-- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45`, the baked walk clip for `Walk` at speed `1.0`, and the baked run clip for `Run/Jog` at speed `1.0`.
-- The live `PlayerAnimationController` has code-driven state switching enabled with `walkClipPromoted` and `runClipPromoted` true. Normal grounded WASD movement uses `Run/Jog`; Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted.
+- `Jump Start` is now a safe Nightfall-native clip created from the working run rig:
+  - `NightfallVanguard_FullQuality_JumpSafe_Baked.fbx`
+  - The baked clip is named `Nightfall_FullQuality_JumpSafe_Baked`.
+- A basic jump set was created in Blender as a temporary placeholder and is now deprecated for live use:
+  - `NightfallVanguard_FullQuality_JumpRun_Cropped_Baked.fbx`, cropped from `Jump_Run_withSkin.glb` frames `7-17` so the obvious run-up is removed.
+  - `NightfallVanguard_FullQuality_AirLoop_Procedural.fbx`
+  - `NightfallVanguard_FullQuality_Land_Procedural.fbx`
+- The live crouch pass now uses Mixamo FBX animation-only clips from `Assets/Animations/NightfallVanguard/Mixamo`.
+- Mixamo jump clips are currently quarantined:
+  - `Mixamo_Jumping.fbx` was baked into `Nightfall_Mixamo_JumpFull_Baked`, but the preview leans too aggressively and causes a ragdoll-like visual in live play.
+  - `Nightfall_Mixamo_JumpStart_Baked`, `Nightfall_Mixamo_JumpAir_Baked`, and `Nightfall_Mixamo_JumpLand_Baked` exist as sandbox/reference clips, but they are not active in `SampleScene`.
+  - `Mixamo_CrouchingIdle.fbx` is baked into `Nightfall_Mixamo_CrouchIdle_Baked`.
+  - `Mixamo_CrouchWalking.fbx` is baked into `Nightfall_Mixamo_CrouchWalk_Baked`.
+  - `Mixamo_CrouchedToStanding.fbx` is baked into `Nightfall_Mixamo_StandUp_Baked`.
+- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45`, the baked walk clip for `Walk` at speed `1.0`, the baked run clip for `Run` at speed `1.0`, the safe Nightfall-native jump clip for `Jump Start`, and the Mixamo clips for crouch.
+- The live `PlayerAnimationController` has code-driven state switching enabled with `walkClipPromoted` and `runClipPromoted` true. Normal WASD movement uses `Run`; Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted.
 - The locomotion feel is intentionally shooter-style default run/jog instead of keyboard walk-to-run gating. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
-- Sprint, jump, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
+- The raw `Jump_Run_withSkin.glb` remains a moving-jump reference because its preview includes running before the jump. It is not used by the live player.
+- Sprint, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
 
 Source folder:
 
@@ -79,6 +94,8 @@ Practical rule for this project:
 
 - Sandbox GLB clips are preview-only until baked/retargeted.
 - The live Player should use Humanoid FBX clips or baked clips exported specifically for `NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`.
+- Mixamo FBX animation-only clips should be imported as Humanoid with `Avatar Definition: Create From This Model`. Do not copy the Nightfall avatar onto Mixamo files because the skeletons are different.
+- The live promoted clips are the Blender-baked Nightfall FBXs under `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked`. Those use the Nightfall skeleton directly and can copy the Nightfall avatar.
 - Do not rename live skeleton bones to force raw `.anim` binding. That can make the mesh explode.
 
 ## Clip Mapping
@@ -87,9 +104,15 @@ Practical rule for this project:
 | --- | --- |
 | Idle | `Nightfall_Idle.anim` |
 | Walk | `Nightfall_Walk.anim` |
-| Run/Jog | `Nightfall_RunJog.anim` |
+| Run | `Nightfall_RunJog.anim` |
 | Sprint | `Nightfall_RunJog.anim` |
-| Jump Start | `Nightfall_JumpStart.anim` |
+| Jump Start | `Nightfall_FullQuality_JumpSafe_Baked` |
+| Falling / In Air | inactive/reference: `Nightfall_Mixamo_JumpAir_Baked` |
+| Landing | inactive/reference: `Nightfall_Mixamo_JumpLand_Baked` |
+| Crouch Idle | `Nightfall_Mixamo_CrouchIdle_Baked` |
+| Crouch Walk | `Nightfall_Mixamo_CrouchWalk_Baked` |
+| Stand Up | `Nightfall_Mixamo_StandUp_Baked` |
+| Running Jump Preview | `Nightfall_Mixamo_RunningJump_Baked` |
 | Aim Walk / Strafe | `Nightfall_AimWalkStrafe.anim` |
 | Slide | `Nightfall_Slide.anim` |
 | Attack Placeholder | `Nightfall_Attack_ArcheryShot.anim` |
@@ -160,3 +183,35 @@ After a clip passes sandbox review:
 5. Test `SampleScene` movement after each promoted clip.
 
 If the live full-quality rig cannot play these clips cleanly, use Blender to normalize the rig and animation paths or export FBX animation clips against a matching skeleton.
+
+## Deprecated Procedural Jump Clips
+
+Generated by:
+
+```text
+Tools/Blender/create_nightfall_basic_jump.py
+Tools/Blender/bake_nightfall_clip_range.py
+```
+
+The old basic jump placeholder uses:
+
+- Cropped `Jump Start`: non-looping, sourced from `Jump_Run_withSkin.glb` frames `7-17`.
+- `Falling / In Air`: looping procedural placeholder.
+- `Landing`: non-looping procedural placeholder.
+
+The physical jump still comes from `ThirdPersonMotor`; these clips only pose the visual character. Keep `Animator.applyRootMotion = false`. In the live player, `jumpClipPromoted`, `airClipPromoted`, and `landClipPromoted` are disabled so questionable jump clips cannot cause ragdoll-like posing, stuck landing, or overlapping jump states.
+
+The current live jump height is `0.5625` in `ThirdPersonMotor` and `SampleScene`, down 25% from the earlier `0.75` prototype height. See `Docs/ANIMATION_PROMOTION_WORKFLOW.md` before changing jump clips or jump tuning again.
+
+## Mixamo Download Targets
+
+Current Mixamo files are valid for this project because they are FBX, no skin, 30 FPS, animation-only files.
+
+Good next Mixamo targets:
+
+- `Falling Idle` or a clean loopable fall pose, so the airborne state does not depend on a sliced jump clip forever.
+- `Hard Landing` and `Soft Landing`, so short hops and long falls can have different land reactions.
+- `Sprint Forward` or `Fast Run`, in-place, no skin, for Shift sprint.
+- `Strafe Left`, `Strafe Right`, `Walk Backward`, and aim/rifle locomotion clips for right-click aim mode.
+- `Running Slide` for the slide mechanic.
+- `Dodge Roll` only after the basic locomotion loop is stable.

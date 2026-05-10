@@ -18,13 +18,18 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         "Idle",
         "Walk",
         "Run/Jog",
-        "Sprint",
         "Jump Start",
+        "Falling / In Air",
+        "Landing",
+        "Crouch Idle",
+        "Crouch Walk",
+        "Stand Up",
+        "Running Jump",
+        "Sprint",
         "Aim Walk / Strafe",
         "Slide",
         "Attack Placeholder",
-        "Ability Placeholder",
-        "Roll Dodge"
+        "Ability Placeholder"
     };
 
     private readonly Key[] keys =
@@ -164,7 +169,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         }
 
         GUI.Label(new Rect(24f, 24f, 520f, 24f), "Nightfall Animation Sandbox");
-        GUI.Label(new Rect(24f, 48f, 780f, 24f), "1 Idle | 2 Walk | 3 Run | 4 Sprint | 5 Jump | 6 Aim | 7 Slide | 8 Attack | 9 Ability | 0 Roll");
+        GUI.Label(new Rect(24f, 48f, 1050f, 24f), "1 Idle | 2 Walk | 3 Run | 4 Jump | 5 Air | 6 Land | 7 Crouch Idle | 8 Crouch Walk | 9 Stand Up | 0 Running Jump");
         GUI.Label(new Rect(24f, 72f, 780f, 24f), "Tab / Space / Right Arrow next | Left Arrow previous | F reset camera");
         GUI.Label(new Rect(24f, 96f, 520f, 24f), "Current: " + currentState);
     }

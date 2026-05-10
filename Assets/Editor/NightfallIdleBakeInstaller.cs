@@ -10,7 +10,8 @@ public static class NightfallIdleBakeInstaller
 {
     private const string TargetModelPath = "Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx";
     private const string ControllerPath = "Assets/Animations/PlayerHumanoid.controller";
-    private const string InstallMarkerPath = "Library/Codex/nightfall_promoted_locomotion_v3.txt";
+    private const string SandboxControllerPath = "Assets/Animations/NightfallVanguard/Nightfall_GLB_Linked.controller";
+    private const string InstallMarkerPath = "Library/Codex/nightfall_promoted_locomotion_v5.txt";
 
     private static readonly ClipSpec[] PromotedClips =
     {
@@ -25,10 +26,11 @@ public static class NightfallIdleBakeInstaller
             "Nightfall_FullQuality_Walk_Baked",
             1.0f),
         new ClipSpec(
-            "Run/Jog",
+            "Run",
             "Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx",
             "Nightfall_FullQuality_Run_Baked",
-            1.0f),
+            1.0f,
+            true),
     };
 
     [InitializeOnLoadMethod]
@@ -67,6 +69,35 @@ public static class NightfallIdleBakeInstaller
             return;
         }
 
+        if (!InstallIntoController(controller, targetAvatar))
+        {
+            return;
+        }
+
+        AnimatorController sandboxController = AssetDatabase.LoadAssetAtPath<AnimatorController>(SandboxControllerPath);
+        if (sandboxController != null)
+        {
+            InstallIntoController(sandboxController, targetAvatar);
+        }
+
+        EditorUtility.SetDirty(controller);
+        if (sandboxController != null)
+        {
+            EditorUtility.SetDirty(sandboxController);
+        }
+
+        AssetDatabase.SaveAssets();
+        ApplyLiveSceneSettings();
+
+        Directory.CreateDirectory(Path.GetDirectoryName(InstallMarkerPath));
+        File.WriteAllText(InstallMarkerPath, string.Join("\n", PromotedClips.Select(spec => spec.ClipName)));
+        AssetDatabase.Refresh();
+
+        Debug.Log("Installed promoted Nightfall locomotion clips into PlayerHumanoid.controller.");
+    }
+
+    private static bool InstallIntoController(AnimatorController controller, Avatar targetAvatar)
+    {
         Undo.RecordObject(controller, "Install promoted Nightfall locomotion");
 
         foreach (ClipSpec spec in PromotedClips)
@@ -78,7 +109,7 @@ public static class NightfallIdleBakeInstaller
             if (clip == null)
             {
                 Debug.LogError($"Nightfall promoted locomotion install failed: clip {spec.ClipName} not found in {spec.BakedPath}");
-                return;
+                return false;
             }
 
             AnimatorState state = FindOrCreateState(controller, spec.StateName);
@@ -87,15 +118,7 @@ public static class NightfallIdleBakeInstaller
             state.speed = spec.StateSpeed;
         }
 
-        EditorUtility.SetDirty(controller);
-        AssetDatabase.SaveAssets();
-        ApplyLiveSceneSettings();
-
-        Directory.CreateDirectory(Path.GetDirectoryName(InstallMarkerPath));
-        File.WriteAllText(InstallMarkerPath, string.Join("\n", PromotedClips.Select(spec => spec.ClipName)));
-        AssetDatabase.Refresh();
-
-        Debug.Log("Installed promoted Nightfall locomotion clips into PlayerHumanoid.controller.");
+        return true;
     }
 
     private static void ApplyLiveSceneSettings()
@@ -116,7 +139,6 @@ public static class NightfallIdleBakeInstaller
             SetBool(serializedController, "walkClipPromoted", true);
             SetBool(serializedController, "runClipPromoted", true);
             SetBool(serializedController, "sprintClipPromoted", false);
-            SetBool(serializedController, "jumpClipPromoted", false);
             serializedController.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(animationController);
         }
@@ -179,13 +201,28 @@ public static class NightfallIdleBakeInstaller
         }
 
         AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
-        Vector3 position = stateName == "Run/Jog"
-            ? new Vector3(310f, 40f, 0f)
-            : new Vector3(500f, 120f, 0f);
+        Vector3 position = StatePosition(stateName);
         AnimatorState created = stateMachine.AddState(stateName, position);
         EditorUtility.SetDirty(stateMachine);
         EditorUtility.SetDirty(created);
         return created;
+    }
+
+    private static Vector3 StatePosition(string stateName)
+    {
+        switch (stateName)
+        {
+            case "Run":
+                return new Vector3(310f, 40f, 0f);
+            case "Jump Start":
+                return new Vector3(500f, -80f, 0f);
+            case "Falling / In Air":
+                return new Vector3(500f, 20f, 0f);
+            case "Landing":
+                return new Vector3(500f, 120f, 0f);
+            default:
+                return new Vector3(500f, 220f, 0f);
+        }
     }
 
     private static void ConfigureBakedClipImporter(ClipSpec spec, Avatar targetAvatar)
@@ -224,8 +261,8 @@ public static class NightfallIdleBakeInstaller
         for (int i = 0; i < clips.Length; i++)
         {
             clips[i].name = spec.ClipName;
-            clips[i].loopTime = true;
-            clips[i].loopPose = true;
+            clips[i].loopTime = spec.LoopTime;
+            clips[i].loopPose = spec.LoopTime;
             clips[i].lockRootRotation = true;
             clips[i].lockRootHeightY = true;
             clips[i].lockRootPositionXZ = true;
@@ -251,17 +288,19 @@ public static class NightfallIdleBakeInstaller
 
     private sealed class ClipSpec
     {
-        public ClipSpec(string stateName, string bakedPath, string clipName, float stateSpeed)
+        public ClipSpec(string stateName, string bakedPath, string clipName, float stateSpeed, bool loopTime = true)
         {
             StateName = stateName;
             BakedPath = bakedPath;
             ClipName = clipName;
             StateSpeed = stateSpeed;
+            LoopTime = loopTime;
         }
 
         public string StateName { get; }
         public string BakedPath { get; }
         public string ClipName { get; }
         public float StateSpeed { get; }
+        public bool LoopTime { get; }
     }
 }

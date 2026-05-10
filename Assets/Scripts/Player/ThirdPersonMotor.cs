@@ -26,10 +26,13 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideRotationSpeed = 10f;
 
     [Header("Physics")]
-    [SerializeField] private float gravity = -9.81f;
-    [SerializeField] private float jumpHeight = 1.5f;
+    [SerializeField] private float gravity = -22f;
+    [SerializeField] private float jumpHeight = 0.5625f;
+    [SerializeField] private float fallGravityMultiplier = 1.5f;
+    [SerializeField] private float maxFallSpeed = -30f;
     [SerializeField] private float coyoteTime = 0.1f;
     [SerializeField] private float jumpBufferTime = 0.12f;
+    [SerializeField] private float minJumpInterval = 0.25f;
     [SerializeField] private float postJumpGroundLockTime = 0.18f;
     [SerializeField] private float groundedJumpResetTime = 0.08f;
     [SerializeField] private float groundCheckRadius = 0.25f;
@@ -59,7 +62,11 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float debugJumpBufferTimer;
     [SerializeField] private float debugSlideBufferTimer;
     [SerializeField] private float debugGroundedStableTimer;
+    [SerializeField] private bool debugControllerGrounded;
+    [SerializeField] private bool debugGroundSphereHit;
+    [SerializeField] private bool debugRawGrounded;
     [SerializeField] private bool debugJumpLockedUntilGrounded;
+    [SerializeField] private bool debugHasLeftGroundSinceJump;
     [SerializeField] private Vector3 debugHorizontalVelocity;
     [SerializeField] private float debugCapsuleHeight;
     [SerializeField] private Vector3 debugCameraTargetLocalPosition;
@@ -81,6 +88,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private bool landedThisFrame;
     private bool hasJumpedSinceGrounded;
     private bool jumpLockedUntilGrounded;
+    private bool hasLeftGroundSinceJump;
     private bool wantsToCrouch;
     private bool isSliding;
     private bool pendingCrouchToggle;
@@ -98,6 +106,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private float jumpBufferTimer;
     private float slideBufferTimer;
     private float groundedStableTimer;
+    private readonly Collider[] groundOverlapHits = new Collider[8];
 
     private void Awake()
     {
@@ -149,9 +158,18 @@ public class ThirdPersonMotor : MonoBehaviour
         Vector3 capsuleFoot = transform.position + controller.center + Vector3.down * (controller.height * 0.5f);
         Vector3 spherePos = capsuleFoot + Vector3.up * Mathf.Max(groundCheckRadius, 0.02f) + groundCheckOffset;
         int mask = groundMask.value == 0 ? Physics.DefaultRaycastLayers : groundMask.value;
-        bool sphereHit = Physics.CheckSphere(spherePos, groundCheckRadius, mask, QueryTriggerInteraction.Ignore);
+        bool sphereHit = CheckGroundSphere(spherePos, groundCheckRadius, mask);
         bool rawGrounded = controller.isGrounded || sphereHit;
-        bool ignoreGroundAfterJump = hasJumpedSinceGrounded
+        debugControllerGrounded = controller.isGrounded;
+        debugGroundSphereHit = sphereHit;
+        debugRawGrounded = rawGrounded;
+
+        if (jumpLockedUntilGrounded && !rawGrounded)
+        {
+            hasLeftGroundSinceJump = true;
+        }
+
+        bool ignoreGroundAfterJump = jumpLockedUntilGrounded
             && (verticalVelocity.y > 0f || Time.time - lastJumpTime < postJumpGroundLockTime);
 
         wasGrounded = isGrounded;
@@ -167,20 +185,51 @@ public class ThirdPersonMotor : MonoBehaviour
             groundedStableTimer = 0f;
         }
 
-        if (jumpLockedUntilGrounded && groundedStableTimer >= groundedJumpResetTime)
+        if (jumpLockedUntilGrounded && isGrounded && verticalVelocity.y <= 0.05f && groundedStableTimer >= groundedJumpResetTime)
         {
             jumpLockedUntilGrounded = false;
             hasJumpedSinceGrounded = false;
+            hasLeftGroundSinceJump = false;
         }
         else if (!jumpLockedUntilGrounded && isGrounded)
         {
             hasJumpedSinceGrounded = false;
+            hasLeftGroundSinceJump = false;
         }
 
         if (isGrounded && verticalVelocity.y < 0f)
         {
             verticalVelocity.y = -2f;
         }
+    }
+
+    private bool CheckGroundSphere(Vector3 spherePosition, float radius, int mask)
+    {
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            spherePosition,
+            radius,
+            groundOverlapHits,
+            mask,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hit = groundOverlapHits[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            Transform hitTransform = hit.transform;
+            if (hitTransform == transform || hitTransform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private void TrackBufferedInputs(float deltaTime)
@@ -196,7 +245,7 @@ public class ThirdPersonMotor : MonoBehaviour
 
         if (input.JumpTriggered)
         {
-            jumpBufferTimer = jumpBufferTime;
+            jumpBufferTimer = jumpLockedUntilGrounded || hasJumpedSinceGrounded ? 0f : jumpBufferTime;
             input.ConsumeJump();
         }
         else
@@ -415,7 +464,9 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         TryConsumeBufferedJump();
 
-        verticalVelocity.y += gravity * deltaTime;
+        float gravityMultiplier = verticalVelocity.y < 0f ? fallGravityMultiplier : 1f;
+        verticalVelocity.y += gravity * gravityMultiplier * deltaTime;
+        verticalVelocity.y = Mathf.Max(verticalVelocity.y, maxFallSpeed);
         controller.Move(verticalVelocity * deltaTime);
     }
 
@@ -444,6 +495,7 @@ public class ThirdPersonMotor : MonoBehaviour
         jumpedThisFrame = true;
         hasJumpedSinceGrounded = true;
         jumpLockedUntilGrounded = true;
+        hasLeftGroundSinceJump = false;
         isGrounded = false;
         coyoteTimer = 0f;
         jumpBufferTimer = 0f;
@@ -455,7 +507,9 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         return (isGrounded || coyoteTimer > 0f)
             && !hasJumpedSinceGrounded
-            && !jumpLockedUntilGrounded;
+            && !jumpLockedUntilGrounded
+            && verticalVelocity.y <= 0.05f
+            && Time.time - lastJumpTime >= minJumpInterval;
     }
 
     private bool CanSprint(float inputMagnitude)
@@ -588,6 +642,7 @@ public class ThirdPersonMotor : MonoBehaviour
         debugSlideBufferTimer = slideBufferTimer;
         debugGroundedStableTimer = groundedStableTimer;
         debugJumpLockedUntilGrounded = jumpLockedUntilGrounded;
+        debugHasLeftGroundSinceJump = hasLeftGroundSinceJump;
         debugHorizontalVelocity = horizontalVelocity;
         debugCapsuleHeight = controller.height;
         debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;

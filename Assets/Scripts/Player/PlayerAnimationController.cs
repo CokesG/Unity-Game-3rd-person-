@@ -19,6 +19,13 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool runClipPromoted;
     [SerializeField] private bool sprintClipPromoted;
     [SerializeField] private bool jumpClipPromoted;
+    [SerializeField] private bool airClipPromoted;
+    [SerializeField] private bool landClipPromoted;
+    [SerializeField] private bool crouchIdleClipPromoted;
+    [SerializeField] private bool crouchWalkClipPromoted;
+    [SerializeField] private bool standUpClipPromoted;
+    [SerializeField] private float landingStateDuration = 0.22f;
+    [SerializeField] private float standUpStateDuration = 0.28f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -35,6 +42,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool currentIsCrouching;
     [SerializeField] private bool currentIsSliding;
     [SerializeField] private bool currentUsesRunVisual;
+    [SerializeField] private float currentLandingStateTime;
 
     private ThirdPersonMotor motor;
     private PlayerInputHandler input;
@@ -61,13 +69,22 @@ public class PlayerAnimationController : MonoBehaviour
 
     private const string IdleState = "Base Layer.Idle";
     private const string WalkState = "Base Layer.Walk";
-    private const string RunState = "Base Layer.Run/Jog";
+    private const string RunState = "Base Layer.Run";
     private const string SprintState = "Base Layer.Sprint";
     private const string JumpState = "Base Layer.Jump Start";
+    private const string AirState = "Base Layer.Falling / In Air";
+    private const string LandingState = "Base Layer.Landing";
+    private const string CrouchIdleState = "Base Layer.Crouch Idle";
+    private const string CrouchWalkState = "Base Layer.Crouch Walk";
+    private const string StandUpState = "Base Layer.Stand Up";
 
     private string currentAnimatorStatePath;
     private readonly HashSet<int> availableParameterHashes = new HashSet<int>();
     private RuntimeAnimatorController cachedController;
+    private float landingStateTimer;
+    private float standUpStateTimer;
+    private bool wasCrouchingLastFrame;
+    private int currentAnimatorStateHash;
 
     private void Awake()
     {
@@ -134,6 +151,9 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsCrouching = motor.IsCrouching();
         currentIsSliding = motor.IsSliding();
         currentUsesRunVisual = ShouldUseRunState();
+        UpdateLandingStateTimer();
+        UpdateStandUpStateTimer();
+        currentLandingStateTime = landingStateTimer;
         currentMovementState = ResolveMovementState();
 
         if (!animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
@@ -148,33 +168,33 @@ public class PlayerAnimationController : MonoBehaviour
         SetFloatIfAvailable(movementYHash, currentMovementY, movementDampTime);
         SetFloatIfAvailable(verticalVelocityHash, currentVerticalVelocity);
         
-        SetBoolIfAvailable(isGroundedHash, currentIsGrounded);
+        bool driveAirborneParameters = airClipPromoted || landClipPromoted;
+        SetBoolIfAvailable(isGroundedHash, driveAirborneParameters ? currentIsGrounded : true);
         SetBoolIfAvailable(isSprintingHash, currentIsSprinting);
         SetBoolIfAvailable(isAimingHash, currentIsAiming);
-        SetBoolIfAvailable(isJumpingHash, currentIsJumping);
-        SetBoolIfAvailable(isFallingHash, currentIsFalling);
+        SetBoolIfAvailable(isJumpingHash, driveAirborneParameters && currentIsJumping);
+        SetBoolIfAvailable(isFallingHash, driveAirborneParameters && currentIsFalling);
         SetBoolIfAvailable(isCrouchingHash, currentIsCrouching);
         SetBoolIfAvailable(isSlidingHash, currentIsSliding);
 
-        if (motor.JumpedThisFrame())
+        if (motor.JumpedThisFrame() && jumpClipPromoted)
         {
             SetTriggerIfAvailable(jumpHash);
-            if (jumpClipPromoted)
-            {
-                CrossFadeIfNeeded(JumpState, jumpCrossFadeTime);
-                return;
-            }
         }
 
-        if (motor.LandedThisFrame())
+        if (motor.LandedThisFrame() && landClipPromoted)
         {
             SetTriggerIfAvailable(landHash);
+            landingStateTimer = landingStateDuration;
+            currentLandingStateTime = landingStateTimer;
         }
 
         if (driveAnimatorStateMachine)
         {
             UpdateLocomotionState();
         }
+
+        wasCrouchingLastFrame = currentIsCrouching;
     }
 
     public void TriggerPrimaryAttack() => SetTriggerIfAvailable(primaryAttackHash);
@@ -187,9 +207,29 @@ public class PlayerAnimationController : MonoBehaviour
     {
         string targetState;
 
-        if (currentIsJumping && jumpClipPromoted)
+        if (!currentIsGrounded && jumpClipPromoted)
         {
             targetState = JumpState;
+        }
+        else if (landingStateTimer > 0f && landClipPromoted)
+        {
+            targetState = LandingState;
+        }
+        else if (!currentIsGrounded && airClipPromoted)
+        {
+            targetState = AirState;
+        }
+        else if (standUpStateTimer > 0f && standUpClipPromoted)
+        {
+            targetState = StandUpState;
+        }
+        else if (currentIsCrouching && currentSpeed > 0.1f && crouchWalkClipPromoted)
+        {
+            targetState = CrouchWalkState;
+        }
+        else if (currentIsCrouching && crouchIdleClipPromoted)
+        {
+            targetState = CrouchIdleState;
         }
         else if (currentIsSprinting && sprintClipPromoted)
         {
@@ -212,21 +252,56 @@ public class PlayerAnimationController : MonoBehaviour
             targetState = IdleState;
         }
 
-        CrossFadeIfNeeded(targetState, locomotionCrossFadeTime);
+        bool isFastOneShot = targetState == JumpState
+            || targetState == AirState
+            || targetState == LandingState
+            || targetState == StandUpState;
+        CrossFadeIfNeeded(targetState, isFastOneShot ? jumpCrossFadeTime : locomotionCrossFadeTime);
+    }
+
+    private void UpdateLandingStateTimer()
+    {
+        if (!currentIsGrounded)
+        {
+            landingStateTimer = 0f;
+            return;
+        }
+
+        if (landingStateTimer > 0f)
+        {
+            landingStateTimer = Mathf.Max(0f, landingStateTimer - Time.deltaTime);
+        }
+    }
+
+    private void UpdateStandUpStateTimer()
+    {
+        if (!currentIsGrounded || currentIsCrouching)
+        {
+            standUpStateTimer = 0f;
+            return;
+        }
+
+        if (wasCrouchingLastFrame && standUpClipPromoted)
+        {
+            standUpStateTimer = standUpStateDuration;
+        }
+        else if (standUpStateTimer > 0f)
+        {
+            standUpStateTimer = Mathf.Max(0f, standUpStateTimer - Time.deltaTime);
+        }
     }
 
     private bool ShouldUseWalkState()
     {
         return currentSpeed > 0.1f
             && walkClipPromoted
-            && (currentIsSlowWalking || currentIsAiming || currentIsCrouching);
+            && (currentIsSlowWalking || currentIsAiming || (currentIsCrouching && !crouchWalkClipPromoted));
     }
 
     private bool ShouldUseRunState()
     {
         return currentSpeed > 0.1f
             && runClipPromoted
-            && currentIsGrounded
             && !currentIsAiming
             && !currentIsCrouching
             && !currentIsSliding
@@ -236,11 +311,30 @@ public class PlayerAnimationController : MonoBehaviour
     private void CrossFadeIfNeeded(string stateName, float fadeTime)
     {
         if (!driveAnimatorStateMachine) return;
-        if (currentAnimatorStatePath == stateName) return;
-        if (!animator.HasState(0, Animator.StringToHash(stateName))) return;
+        int targetStateHash = Animator.StringToHash(stateName);
+        if (!animator.HasState(0, targetStateHash)) return;
+
+        AnimatorStateInfo currentState = animator.GetCurrentAnimatorStateInfo(0);
+        if (currentAnimatorStateHash == targetStateHash)
+        {
+            if (animator.IsInTransition(0))
+            {
+                AnimatorStateInfo nextState = animator.GetNextAnimatorStateInfo(0);
+                if (nextState.fullPathHash == targetStateHash || nextState.shortNameHash == targetStateHash)
+                {
+                    return;
+                }
+            }
+
+            if (currentState.fullPathHash == targetStateHash || currentState.shortNameHash == targetStateHash)
+            {
+                return;
+            }
+        }
 
         animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
         currentAnimatorStatePath = stateName;
+        currentAnimatorStateHash = targetStateHash;
     }
 
     private void CacheAnimatorParameters()
@@ -248,6 +342,8 @@ public class PlayerAnimationController : MonoBehaviour
         if (animator == null || animator.runtimeAnimatorController == cachedController) return;
 
         cachedController = animator.runtimeAnimatorController;
+        currentAnimatorStatePath = null;
+        currentAnimatorStateHash = 0;
         availableParameterHashes.Clear();
 
         foreach (AnimatorControllerParameter parameter in animator.parameters)
@@ -299,10 +395,12 @@ public class PlayerAnimationController : MonoBehaviour
     private string ResolveMovementState()
     {
         if (motor.IsSliding()) return "Sliding";
+        if (standUpStateTimer > 0f && standUpClipPromoted) return "Stand Up";
         if (motor.IsCrouching()) return currentSpeed > 0.1f ? "Crouch Move" : "Crouch Idle";
         if (currentIsAiming) return currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
-        if (currentIsJumping) return "Jumping";
-        if (currentIsFalling) return "Falling";
+        if (!currentIsGrounded && jumpClipPromoted) return "Jumping";
+        if (landingStateTimer > 0f && landClipPromoted) return "Landing";
+        if (!currentIsGrounded) return "Airborne / Locomotion";
         if (currentIsSprinting) return sprintClipPromoted ? "Sprinting" : "Sprint Speed / Run Visual";
         if (currentIsSlowWalking) return "Slow Walking";
         if (currentUsesRunVisual) return "Running";

@@ -6,11 +6,23 @@ Current controller:
 
 `Assets/Animations/PlayerHumanoid.controller`
 
-The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle`, `Walk`, and `Run/Jog` are promoted to the live controller:
+The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle`, `Walk`, `Run`, the safe Nightfall-native jump, and the vetted Mixamo crouch pass are promoted to the live controller:
 
 - `Idle`: `Nightfall_FullQuality_Idle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Idle_Baked.fbx`
 - `Walk`: `Nightfall_FullQuality_Walk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`
-- `Run/Jog`: `Nightfall_FullQuality_Run_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`
+- `Run`: `Nightfall_FullQuality_Run_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`
+- `Jump Start`: `Nightfall_FullQuality_JumpSafe_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_JumpSafe_Baked.fbx`
+- `Crouch Idle`: `Nightfall_Mixamo_CrouchIdle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_CrouchIdle_Baked.fbx`
+- `Crouch Walk`: `Nightfall_Mixamo_CrouchWalk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_CrouchWalk_Baked.fbx`
+- `Stand Up`: `Nightfall_Mixamo_StandUp_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_StandUp_Baked.fbx`
+
+Mixamo import rule:
+
+- Download FBX, no skin, 30 FPS.
+- Use `Rig > Animation Type: Humanoid`.
+- Use `Avatar Definition: Create From This Model` for Mixamo animation-only FBXs because Mixamo uses its own skeleton. Unity retargets that humanoid source avatar onto the Nightfall humanoid avatar at runtime.
+- For this project, the Mixamo source files are then baked in Blender onto the Nightfall skeleton with `Tools/Blender/bake_mixamo_to_nightfall.py`, and the live controller uses those baked Nightfall FBXs.
+- Keep root motion off for now. The CharacterController still owns real movement, jump height, collision, and landing.
 
 Assign additional clips to the live Player visual only after clips are verified in the sandbox and confirmed to be compatible with the live full-quality rig.
 
@@ -68,7 +80,7 @@ The controller contains placeholder states for:
 
 - `Idle`
 - `Walk`
-- `Run/Jog`
+- `Run`
 - `Sprint`
 - `Jump Start`
 - `Falling / In Air`
@@ -86,7 +98,7 @@ Drop clips into matching states or blend tree slots in the sandbox first:
 
 - `Idle`: idle clip
 - `Walk`: walk forward in-place
-- `Run/Jog`: run or jog forward in-place
+- `Run`: run forward in-place
 - `Sprint`: sprint forward in-place
 - `Jump Start`: jump takeoff
 - `Falling / In Air`: falling or airborne loop
@@ -100,9 +112,15 @@ Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing
 
 The live `PlayerAnimationController` is parameter-driven by default. Leave `driveAnimatorStateMachine` disabled until the Animator transitions or blend trees are intentionally built.
 
-Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal grounded WASD movement uses `Run/Jog`, while Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted. Sprint and jump are still intentionally unpromoted.
+Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal WASD movement uses `Run`, while Ctrl slow walk and aim movement use `Walk` until their own clips are promoted. Crouch idle/walk/stand use Mixamo clips. Jump uses a short, safe, Nightfall-native clip built from the working run rig. Sprint is still intentionally unpromoted.
 
 Default movement is intentionally run/jog for shooter feel. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
+
+For the exact one-clip-at-a-time promotion process and the jump mistakes we hit, see `Docs/ANIMATION_PROMOTION_WORKFLOW.md`.
+
+`Jump_Run_withSkin.glb` is not used raw. The old cropped/procedural jump files and the current Mixamo jump bakes remain as references only. The live player has `jumpClipPromoted` enabled for `Nightfall_FullQuality_JumpSafe_Baked`, while `airClipPromoted` and `landClipPromoted` stay disabled so no questionable fall/land animation can interrupt the controller.
+
+The physical jump arc is intentionally shorter than the early prototype: `jumpHeight` is `0.5625`, gravity is `-22`, and falling gravity uses a `1.5` multiplier in `ThirdPersonMotor` so the visual takeoff does not finish while the controller is still floating. Jump input is ignored while the current jump is locked, so Space spam cannot stack vertical velocity.
 
 ## Import Settings
 

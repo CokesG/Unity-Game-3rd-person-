@@ -10,11 +10,13 @@ Keyboard input is digital, so pressing `W` is full forward input. For a third-pe
 
 Current tuning:
 
-- Normal WASD uses `Run/Jog` visually.
+- Normal WASD uses `Run` visually.
 - `Left Ctrl` or `Right Ctrl` holds `SlowWalkPressed`, which uses walk speed and the `Walk` animation.
 - Holding Shift requests sprint speed immediately.
-- Until a true sprint clip is promoted, sprint speed still uses the `Run/Jog` visual.
-- Aim and crouch use slower movement and currently fall back to the `Walk` visual until aim/crouch-specific clips are promoted.
+- Until a true sprint clip is promoted, sprint speed still uses the `Run` visual.
+- Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
+- Crouch uses the promoted Mixamo `Crouch Idle`, `Crouch Walk`, and `Stand Up` clips.
+- Jump uses a short safe Nightfall-native `Jump Start` clip while the physical jump stays controller-driven and tuned to a low, snappy arc (`jumpHeight` `0.5625`, `gravity` `-22`, falling gravity multiplier `1.5`). Falling and landing clips remain disabled until clean clips pass review.
 - Crossfade is `0.18` seconds so state changes do not snap.
 
 ## Why This Shape
@@ -39,7 +41,7 @@ After idle, walk, run, sprint, and jump are accepted, replace the hard walk/run 
 
 - `Idle` around speed `0`
 - `Walk` around speed `2.5`, entered by slow walk or analog low input
-- `Run/Jog` around speed `5.5`, the default WASD movement
+- `Run` around speed `5.5`, the default WASD movement
 - `Sprint` around speed `7.25`, entered by Shift
 
 That will remove most hard cuts and make the animation follow actual movement speed more naturally.
@@ -58,6 +60,7 @@ In `ThirdPersonMotor`:
 - `sprintAcceleration`: lower it if Shift feels too twitchy.
 - `walkSpeed`: tune Ctrl slow walk speed.
 - `runSpeed` and `sprintSpeed`: tune only after animation timing feels acceptable.
+- `jumpHeight`: current value is `0.5625`, which is 25% lower than the previous `0.75`. Tune this in the motor and the live scene together; animation clips should follow the controller, not create the jump height.
 
 In `PlayerInputHandler`:
 

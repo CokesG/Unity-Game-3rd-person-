@@ -157,7 +157,7 @@ Test in this order:
 
 1. Idle.
 2. Walk forward.
-3. Run/Jog forward.
+3. Run forward.
 4. Sprint forward.
 5. Jump Start.
 6. Falling / In Air.

@@ -1102,7 +1102,14 @@ MonoBehaviour:
   walkClipPromoted: 1
   runClipPromoted: 1
   sprintClipPromoted: 0
-  jumpClipPromoted: 0
+  jumpClipPromoted: 1
+  airClipPromoted: 0
+  landClipPromoted: 0
+  crouchIdleClipPromoted: 1
+  crouchWalkClipPromoted: 1
+  standUpClipPromoted: 1
+  landingStateDuration: 0.1
+  standUpStateDuration: 0.28
   currentMovementState: 
   currentSpeed: 0
   currentMovementX: 0
@@ -1117,6 +1124,7 @@ MonoBehaviour:
   currentIsCrouching: 0
   currentIsSliding: 0
   currentUsesRunVisual: 0
+  currentLandingStateTime: 0
 --- !u!114 &951686970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1146,17 +1154,20 @@ MonoBehaviour:
   aimRotationSpeed: 24
   sprintRotationSpeed: 12
   slideRotationSpeed: 10
-  gravity: -9.81
-  jumpHeight: 1.5
+  gravity: -22
+  jumpHeight: 0.5625
+  fallGravityMultiplier: 1.5
+  maxFallSpeed: -30
   coyoteTime: 0.1
   jumpBufferTime: 0.12
+  minJumpInterval: 0.25
   postJumpGroundLockTime: 0.18
   groundedJumpResetTime: 0.08
   groundCheckRadius: 0.25
   groundCheckOffset: {x: 0, y: 0, z: 0}
   groundMask:
     serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 4294967227
   cameraTarget: {fileID: 1608322658}
   crouchHeight: 1.1
   crouchCameraTargetY: 0.15
@@ -1177,7 +1188,11 @@ MonoBehaviour:
   debugJumpBufferTimer: 0
   debugSlideBufferTimer: 0
   debugGroundedStableTimer: 0
+  debugControllerGrounded: 0
+  debugGroundSphereHit: 0
+  debugRawGrounded: 0
   debugJumpLockedUntilGrounded: 0
+  debugHasLeftGroundSinceJump: 0
   debugHorizontalVelocity: {x: 0, y: 0, z: 0}
   debugCapsuleHeight: 0
   debugCameraTargetLocalPosition: {x: 0, y: 0, z: 0}
