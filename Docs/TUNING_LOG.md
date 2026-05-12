@@ -100,3 +100,18 @@ Implemented:
 - Added `NoDmg` world-hit reporting to separate geometry/collider hits from damage-registered hits.
 
 Use this pass to tune from evidence: if the rifle feels unfair, check recoil burst and spread first; if slide/jump feels inconsistent, check movement buffers and jump lock before changing values.
+
+## 2026-05-12 - Procedural Crouch-Walk V2 Review Pass
+
+Implemented:
+
+- Regenerated the full-quality forward/back/left/right procedural crouch-walk FBXs with a lower, more compact stance.
+- Updated `Tools/Blender/create_nightfall_crouch_walk_procedural.py` to ground every key pose, reduce leg crossing, and bake temporary IK hand targets into a tighter two-hand shooter-ready arm pose.
+- Added directional review cycling to `NightfallAnimationSandboxDriver`; in the linked sandbox, press `9` for `Crouched Walk`, then `Q` / `E` to cycle forward/back/left/right procedural candidates.
+- Kept live `SampleScene` crouch-walk promotion off. The live player should still hold the reviewed crouch pose while moving crouched.
+
+Validation:
+
+- Blender MCP export bounds: all regenerated full-quality candidates sample at `min_z = 0.015` across key poses.
+- Unity recompiled successfully after the sandbox driver change.
+- Unity logged `Configured 8 procedural crouch-walk candidate importers.` after running the reimport utility.

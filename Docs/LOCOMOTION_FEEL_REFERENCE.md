@@ -16,7 +16,7 @@ Current tuning:
 - Holding Shift requests sprint speed immediately.
 - Until a true sprint clip is promoted, sprint speed still uses the `Run` visual.
 - Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
-- Crouch gameplay is active. Stand-to-crouch, crouch idle, and crouch-to-stand are live-promoted. Crouch-walk is quarantined in live play; the linked sandbox now previews a grounded full-quality procedural forward candidate on `9 Crouched Walk`, but moving crouched in `SampleScene` should still hold the reviewed crouch pose until the full directional set passes review. Grounded visual grounding uses foot/toe bones first and renderer bounds only as a fallback so the visual child can be corrected without moving the `Player` root or `CharacterController`.
+- Crouch gameplay is active. Stand-to-crouch, crouch idle, and crouch-to-stand are live-promoted. Crouch-walk is quarantined in live play; the linked sandbox now previews grounded, compact full-quality procedural candidates on `9 Crouched Walk`, and `Q` / `E` cycles forward/back/left/right. Moving crouched in `SampleScene` should still hold the reviewed crouch pose until the full directional set passes review. Grounded visual grounding uses foot/toe bones first and renderer bounds only as a fallback so the visual child can be corrected without moving the `Player` root or `CharacterController`.
 - Jump uses a short safe Nightfall-native `Jump Start` clip while the physical jump stays controller-driven and tuned to a low, snappy arc (`jumpHeight` `0.5625`, `gravity` `-22`, falling gravity multiplier `1.5`). Falling and landing clips remain disabled until clean clips pass review.
 - Crossfade is `0.18` seconds so state changes do not snap.
 

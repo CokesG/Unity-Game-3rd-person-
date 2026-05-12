@@ -67,6 +67,56 @@ def add_location(armature, bone_name, offset):
     bone.location.z += offset[2]
 
 
+def create_ik_target(name):
+    target = bpy.data.objects.new(name, None)
+    target.empty_display_type = "SPHERE"
+    target.empty_display_size = 0.05
+    bpy.context.collection.objects.link(target)
+    return target
+
+
+def setup_hand_ik(armature):
+    targets = {}
+    for hand_name in ("LeftHand", "RightHand"):
+        hand = armature.pose.bones.get(hand_name)
+        if hand is None:
+            continue
+
+        target = create_ik_target(f"CrouchWalkIK_{hand_name}")
+        constraint = hand.constraints.new(type="IK")
+        constraint.name = "CrouchWalk_WeaponReadyIK"
+        constraint.target = target
+        constraint.chain_count = 2
+        constraint.use_rotation = True
+        constraint.influence = 1.0
+        targets[hand_name] = target
+
+    return targets
+
+
+def mesh_bounds(mesh_objects):
+    bpy.context.view_layer.update()
+    min_corner = Vector((float("inf"), float("inf"), float("inf")))
+    max_corner = Vector((float("-inf"), float("-inf"), float("-inf")))
+    has_bounds = False
+
+    for mesh in mesh_objects:
+        for corner in mesh.bound_box:
+            world = mesh.matrix_world @ Vector(corner)
+            min_corner.x = min(min_corner.x, world.x)
+            min_corner.y = min(min_corner.y, world.y)
+            min_corner.z = min(min_corner.z, world.z)
+            max_corner.x = max(max_corner.x, world.x)
+            max_corner.y = max(max_corner.y, world.y)
+            max_corner.z = max(max_corner.z, world.z)
+            has_bounds = True
+
+    if not has_bounds:
+        return Vector((0.0, 0.0, 0.0)), Vector((0.0, 0.0, 0.0))
+
+    return min_corner, max_corner
+
+
 def key_all_bones(armature, frame):
     bpy.context.scene.frame_set(frame)
     for bone in armature.pose.bones:
@@ -76,14 +126,8 @@ def key_all_bones(armature, frame):
 
 
 def mesh_min_z(mesh_objects):
-    bpy.context.view_layer.update()
-    min_z = None
-    for mesh in mesh_objects:
-        for corner in mesh.bound_box:
-            world = mesh.matrix_world @ Vector(corner)
-            min_z = world.z if min_z is None else min(min_z, world.z)
-
-    return 0.0 if min_z is None else min_z
+    min_corner, _ = mesh_bounds(mesh_objects)
+    return min_corner.z
 
 
 def ground_pose_to_mesh(armature, mesh_objects, target_min_z=0.015):
@@ -122,45 +166,66 @@ def action_fcurves(action):
 
 
 def apply_base_crouch(armature, bob=0.0, sway=0.0):
-    add_location(armature, "Hips", (sway, -16.0 + bob, -8.0))
-    add_rotation(armature, "Hips", (-26.0, 0.0, 0.0))
-    add_rotation(armature, "Spine", (17.0, 0.0, 0.0))
-    add_rotation(armature, "Spine01", (20.0, 0.0, 0.0))
-    add_rotation(armature, "Spine02", (10.0, 0.0, 0.0))
-    add_rotation(armature, "LeftUpLeg", (90.0, 0.0, 10.0))
-    add_rotation(armature, "RightUpLeg", (90.0, 0.0, -10.0))
-    add_rotation(armature, "LeftLeg", (-138.0, 0.0, 0.0))
-    add_rotation(armature, "RightLeg", (-138.0, 0.0, 0.0))
-    add_rotation(armature, "LeftFoot", (54.0, 0.0, 0.0))
-    add_rotation(armature, "RightFoot", (54.0, 0.0, 0.0))
-    add_rotation(armature, "LeftArm", (-16.0, 0.0, -12.0))
-    add_rotation(armature, "RightArm", (-16.0, 0.0, 12.0))
-    add_rotation(armature, "LeftForeArm", (28.0, 0.0, 0.0))
-    add_rotation(armature, "RightForeArm", (28.0, 0.0, 0.0))
+    add_location(armature, "Hips", (sway, -17.5 + bob, -8.0))
+    add_rotation(armature, "Hips", (-21.0, 0.0, 0.0))
+    add_rotation(armature, "Spine", (13.0, 0.0, 0.0))
+    add_rotation(armature, "Spine01", (15.0, 0.0, 0.0))
+    add_rotation(armature, "Spine02", (8.0, 0.0, 0.0))
+    add_rotation(armature, "LeftUpLeg", (84.0, 0.0, -7.0))
+    add_rotation(armature, "RightUpLeg", (84.0, 0.0, 7.0))
+    add_rotation(armature, "LeftLeg", (-128.0, 0.0, 0.0))
+    add_rotation(armature, "RightLeg", (-128.0, 0.0, 0.0))
+    add_rotation(armature, "LeftFoot", (50.0, 0.0, 0.0))
+    add_rotation(armature, "RightFoot", (50.0, 0.0, 0.0))
+
+    # Start the arms from a compact, lowered pose; IK below keeps the hands in a
+    # two-hand weapon-ready pocket during the bake.
+    add_rotation(armature, "LeftArm", (0.0, 0.0, 60.0))
+    add_rotation(armature, "RightArm", (0.0, 0.0, -60.0))
+    add_rotation(armature, "LeftForeArm", (20.0, 0.0, 0.0))
+    add_rotation(armature, "RightForeArm", (20.0, 0.0, 0.0))
 
 
 def apply_forward_back_step(armature, sign, reverse=False):
     stride = -sign if reverse else sign
-    add_rotation(armature, "LeftUpLeg", (10.0 * stride, 0.0, 2.0 * stride))
-    add_rotation(armature, "RightUpLeg", (-10.0 * stride, 0.0, -2.0 * stride))
-    add_rotation(armature, "LeftLeg", (-8.0 * stride, 0.0, 0.0))
-    add_rotation(armature, "RightLeg", (8.0 * stride, 0.0, 0.0))
-    add_rotation(armature, "LeftFoot", (3.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "RightFoot", (-3.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftUpLeg", (6.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightUpLeg", (-6.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftLeg", (-4.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightLeg", (4.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftFoot", (2.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightFoot", (-2.5 * stride, 0.0, 0.0))
 
 
 def apply_strafe_step(armature, sign, right=False):
     side = sign if right else -sign
-    add_rotation(armature, "Hips", (0.0, 0.0, -3.0 if right else 3.0))
-    add_rotation(armature, "LeftUpLeg", (4.0, 0.0, -9.0 * side))
-    add_rotation(armature, "RightUpLeg", (4.0, 0.0, -9.0 * side))
-    add_rotation(armature, "LeftLeg", (-5.0, 0.0, 2.0 * side))
-    add_rotation(armature, "RightLeg", (-5.0, 0.0, 2.0 * side))
-    add_rotation(armature, "LeftFoot", (2.0, 0.0, -3.0 * side))
-    add_rotation(armature, "RightFoot", (2.0, 0.0, -3.0 * side))
+    add_rotation(armature, "Hips", (0.0, 0.0, -2.0 if right else 2.0))
+    add_rotation(armature, "LeftUpLeg", (2.0, 0.0, -5.0 * side))
+    add_rotation(armature, "RightUpLeg", (2.0, 0.0, -5.0 * side))
+    add_rotation(armature, "LeftLeg", (-3.0, 0.0, 1.0 * side))
+    add_rotation(armature, "RightLeg", (-3.0, 0.0, 1.0 * side))
+    add_rotation(armature, "LeftFoot", (1.0, 0.0, -1.5 * side))
+    add_rotation(armature, "RightFoot", (1.0, 0.0, -1.5 * side))
 
 
-def apply_direction_pose(armature, mesh_objects, base_pose, direction, frame, sign, bob, sway):
+def place_hand_targets(ik_targets, mesh_objects, frame, sign):
+    min_corner, max_corner = mesh_bounds(mesh_objects)
+    center = (min_corner + max_corner) * 0.5
+
+    hand_positions = {
+        "LeftHand": Vector((-0.18, center.y - 0.34 - 0.015 * sign, min_corner.z + 0.83)),
+        "RightHand": Vector((0.18, center.y - 0.40 + 0.015 * sign, min_corner.z + 0.80)),
+    }
+
+    for hand_name, position in hand_positions.items():
+        target = ik_targets.get(hand_name)
+        if target is None:
+            continue
+
+        target.location = position
+        target.keyframe_insert(data_path="location", frame=frame)
+
+
+def apply_direction_pose(armature, mesh_objects, ik_targets, base_pose, direction, frame, sign, bob, sway):
     reset_pose(armature, base_pose)
     apply_base_crouch(armature, bob, sway)
 
@@ -173,28 +238,31 @@ def apply_direction_pose(armature, mesh_objects, base_pose, direction, frame, si
     elif direction == "Right":
         apply_strafe_step(armature, sign, right=True)
 
-    add_rotation(armature, "LeftArm", (-2.0 * sign, 0.0, -1.5 * sign))
-    add_rotation(armature, "RightArm", (2.0 * sign, 0.0, -1.5 * sign))
     ground_pose_to_mesh(armature, mesh_objects)
+    place_hand_targets(ik_targets, mesh_objects, frame, sign)
+    for _ in range(4):
+        bpy.context.view_layer.update()
+
     key_all_bones(armature, frame)
 
 
 def create_action(armature, mesh_objects, base_pose, direction):
     action = bpy.data.actions.new(f"Nightfall_FullQuality_CrouchWalk_{direction}_Procedural")
     armature.animation_data.action = action
+    ik_targets = setup_hand_ik(armature)
 
     phases = [
-        (1, 1.0, 0.0, -0.08),
-        (8, 0.0, 0.20, 0.0),
-        (15, -1.0, 0.0, 0.08),
-        (22, 0.0, 0.20, 0.0),
-        (29, 1.0, 0.0, -0.08),
+        (1, 1.0, 0.0, -0.045),
+        (9, 0.0, 0.10, 0.0),
+        (17, -1.0, 0.0, 0.045),
+        (25, 0.0, 0.10, 0.0),
+        (33, 1.0, 0.0, -0.045),
     ]
 
     for frame, sign, bob, sway in phases:
-        apply_direction_pose(armature, mesh_objects, base_pose, direction, frame, sign, bob, sway)
+        apply_direction_pose(armature, mesh_objects, ik_targets, base_pose, direction, frame, sign, bob, sway)
 
-    action.frame_range = (1, 29)
+    action.frame_range = (1, 33)
     for curve in action_fcurves(action):
         for keyframe in curve.keyframe_points:
             keyframe.interpolation = "BEZIER"
@@ -205,7 +273,7 @@ def create_action(armature, mesh_objects, base_pose, direction):
 def export_current_action(armature, mesh_objects, out_path):
     scene = bpy.context.scene
     scene.frame_start = 1
-    scene.frame_end = 29
+    scene.frame_end = 33
     scene.render.fps = 30
 
     bpy.ops.object.mode_set(mode="OBJECT")

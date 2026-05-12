@@ -1,5 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class NightfallAnimationSandboxDriver : MonoBehaviour
 {
@@ -22,6 +26,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private float previewGroundY = 0.02f;
     [SerializeField] private bool showHud = true;
     [SerializeField] private int currentStateIndex;
+
+    [Header("Crouch Walk Review")]
+    [SerializeField] private bool autoLoadProceduralCrouchWalkClips = true;
+    [SerializeField] private AnimationClip[] crouchWalkReviewClips;
+    [SerializeField] private int currentCrouchWalkReviewClipIndex;
 
     private readonly string[] stateNames =
     {
@@ -93,6 +102,9 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private string currentState = "Idle";
     private string statusText = "Ready";
+    private AnimatorOverrideController crouchWalkReviewOverrideController;
+    private RuntimeAnimatorController crouchWalkReviewBaseController;
+    private readonly List<KeyValuePair<AnimationClip, AnimationClip>> crouchWalkClipOverrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
 
     private void OnEnable()
     {
@@ -169,6 +181,8 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             animator.Rebind();
             animator.Update(0f);
+            EnsureCrouchWalkReviewClips();
+            ApplyCrouchWalkReviewClip();
         }
 
         FramePreviewCamera();
@@ -215,6 +229,16 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             FramePreviewCamera();
         }
+
+        if (Keyboard.current.qKey.wasPressedThisFrame || Keyboard.current.leftBracketKey.wasPressedThisFrame)
+        {
+            CycleCrouchWalkReviewClip(-1);
+        }
+
+        if (Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.rightBracketKey.wasPressedThisFrame)
+        {
+            CycleCrouchWalkReviewClip(1);
+        }
     }
 
     private void PlayState(int index)
@@ -236,6 +260,12 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
             return;
         }
 
+        if (stateName == "Crouch Walk")
+        {
+            EnsureCrouchWalkReviewClips();
+            ApplyCrouchWalkReviewClip();
+        }
+
         if (!TryResolveStateHash(stateName, out int stateHash))
         {
             statusText = "Missing Animator state: " + stateName;
@@ -247,6 +277,138 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         animator.CrossFadeInFixedTime(stateHash, crossFadeTime, 0, 0f);
         animator.Update(1f / 60f);
         SnapAnimatorToGround();
+    }
+
+    private void EnsureCrouchWalkReviewClips()
+    {
+        if (!autoLoadProceduralCrouchWalkClips || crouchWalkReviewClips != null && crouchWalkReviewClips.Length > 0)
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        const string folder = "Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk";
+        string[] directions = { "Forward", "Back", "Left", "Right" };
+        List<AnimationClip> clips = new List<AnimationClip>();
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            string path = folder + "/NightfallVanguard_FullQuality_CrouchWalk_" + directions[i] + "_Procedural.fbx";
+            AnimationClip clip = LoadFirstAnimationClipAtPath(path);
+            if (clip != null)
+            {
+                clips.Add(clip);
+            }
+        }
+
+        crouchWalkReviewClips = clips.ToArray();
+#endif
+    }
+
+#if UNITY_EDITOR
+    private static AnimationClip LoadFirstAnimationClipAtPath(string path)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetRepresentationsAtPath(path);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is AnimationClip clip && !clip.name.StartsWith("__preview__", System.StringComparison.Ordinal))
+            {
+                return clip;
+            }
+        }
+
+        return null;
+    }
+#endif
+
+    private void CycleCrouchWalkReviewClip(int direction)
+    {
+        EnsureCrouchWalkReviewClips();
+        if (crouchWalkReviewClips == null || crouchWalkReviewClips.Length == 0)
+        {
+            statusText = "No crouch-walk review clips found";
+            return;
+        }
+
+        currentCrouchWalkReviewClipIndex = (currentCrouchWalkReviewClipIndex + direction + crouchWalkReviewClips.Length) % crouchWalkReviewClips.Length;
+        ApplyCrouchWalkReviewClip();
+
+        if (currentState == "Crouch Walk")
+        {
+            PlayState(currentStateIndex);
+        }
+    }
+
+    private void ApplyCrouchWalkReviewClip()
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
+        EnsureCrouchWalkReviewClips();
+        AnimationClip selectedClip = GetCurrentCrouchWalkReviewClip();
+        if (selectedClip == null)
+        {
+            return;
+        }
+
+        RuntimeAnimatorController runtimeController = animator.runtimeAnimatorController;
+        if (runtimeController is AnimatorOverrideController existingOverride)
+        {
+            crouchWalkReviewOverrideController = existingOverride;
+            crouchWalkReviewBaseController = existingOverride.runtimeAnimatorController;
+        }
+        else if (crouchWalkReviewOverrideController == null || crouchWalkReviewBaseController != runtimeController)
+        {
+            crouchWalkReviewBaseController = runtimeController;
+            crouchWalkReviewOverrideController = new AnimatorOverrideController(crouchWalkReviewBaseController)
+            {
+                name = crouchWalkReviewBaseController.name + "_CrouchWalkReview"
+            };
+            animator.runtimeAnimatorController = crouchWalkReviewOverrideController;
+        }
+
+        crouchWalkReviewOverrideController.GetOverrides(crouchWalkClipOverrides);
+        for (int i = 0; i < crouchWalkClipOverrides.Count; i++)
+        {
+            AnimationClip sourceClip = crouchWalkClipOverrides[i].Key;
+            if (sourceClip == null || !IsCrouchWalkClipName(sourceClip.name))
+            {
+                continue;
+            }
+
+            crouchWalkClipOverrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(sourceClip, selectedClip);
+        }
+
+        crouchWalkReviewOverrideController.ApplyOverrides(crouchWalkClipOverrides);
+        statusText = "Reviewing " + ShortClipName(selectedClip.name);
+    }
+
+    private AnimationClip GetCurrentCrouchWalkReviewClip()
+    {
+        if (crouchWalkReviewClips == null || crouchWalkReviewClips.Length == 0)
+        {
+            return null;
+        }
+
+        currentCrouchWalkReviewClipIndex = Mathf.Clamp(currentCrouchWalkReviewClipIndex, 0, crouchWalkReviewClips.Length - 1);
+        return crouchWalkReviewClips[currentCrouchWalkReviewClipIndex];
+    }
+
+    private static bool IsCrouchWalkClipName(string clipName)
+    {
+        return clipName.IndexOf("CrouchWalk", System.StringComparison.OrdinalIgnoreCase) >= 0
+            || clipName.IndexOf("Crouch_Walk", System.StringComparison.OrdinalIgnoreCase) >= 0
+            || clipName.IndexOf("Crouch Walk", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static string ShortClipName(string clipName)
+    {
+        return clipName
+            .Replace("Nightfall_FullQuality_", string.Empty)
+            .Replace("_Procedural", string.Empty)
+            .Replace('_', ' ');
     }
 
     private void LateUpdate()
@@ -376,10 +538,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
             return;
         }
 
-        GUI.Box(new Rect(16f, 16f, 704f, 200f), "Nightfall Animation Sandbox");
+        GUI.Box(new Rect(16f, 16f, 704f, 236f), "Nightfall Animation Sandbox");
         GUI.Label(new Rect(28f, 40f, 664f, 22f), "Current: " + currentState + " | " + statusText);
         GUI.Label(new Rect(28f, 62f, 664f, 22f), "Preview only. Use buttons or number keys. WASD movement is tested in SampleScene.");
         GUI.Label(new Rect(28f, 84f, 664f, 22f), GetAnimatorDebugText());
+        GUI.Label(new Rect(28f, 106f, 664f, 22f), GetCrouchWalkReviewText());
 
         const float buttonWidth = 128f;
         const float buttonHeight = 26f;
@@ -390,7 +553,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             int row = i / columns;
             int column = i % columns;
-            Rect rect = new Rect(28f + column * (buttonWidth + gap), 116f + row * (buttonHeight + gap), buttonWidth, buttonHeight);
+            Rect rect = new Rect(28f + column * (buttonWidth + gap), 138f + row * (buttonHeight + gap), buttonWidth, buttonHeight);
             string labelText = i < buttonLabels.Length ? buttonLabels[i] : stateNames[i];
             string label = i < 10 ? GetNumberLabel(i) + " " + labelText : labelText;
             if (GUI.Button(rect, label))
@@ -417,6 +580,13 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         string clipName = clips.Length > 0 && clips[0].clip != null ? clips[0].clip.name : "No active clip";
         string controllerName = animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.name : "No controller";
         return "Controller: " + controllerName + " | Clip: " + clipName + " | Time: " + stateInfo.normalizedTime.ToString("0.00");
+    }
+
+    private string GetCrouchWalkReviewText()
+    {
+        AnimationClip clip = GetCurrentCrouchWalkReviewClip();
+        string clipText = clip != null ? ShortClipName(clip.name) : "no procedural clips loaded";
+        return "Crouch-walk review: " + clipText + " | Q/E cycles directional candidates";
     }
 
     private void ResolveAnimator()
