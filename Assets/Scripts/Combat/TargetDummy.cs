@@ -11,6 +11,11 @@ public class TargetDummy : MonoBehaviour, IDamageable
     [SerializeField] private Color defeatedColor = new Color(0.05f, 0.05f, 0.05f);
     [SerializeField] private float hitFlashTime = 0.08f;
 
+    [Header("Prototype Hitboxes")]
+    [SerializeField] private bool configurePrototypeHitboxes = true;
+    [SerializeField] private float bodyColliderHeight = 1.35f;
+    [SerializeField] private Vector3 bodyColliderCenter = new Vector3(0f, -0.22f, 0f);
+
     [Header("Debug Readout")]
     [SerializeField] private float currentHealth;
     [SerializeField] private float lastDamage;
@@ -54,6 +59,8 @@ public class TargetDummy : MonoBehaviour, IDamageable
 
     private void Awake()
     {
+        ConfigurePrototypeHitboxes();
+
         if (visualRenderer == null)
         {
             visualRenderer = GetComponentInChildren<Renderer>();
@@ -63,6 +70,23 @@ public class TargetDummy : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
         currentLifeStartTime = Time.time;
         ApplyColor(healthyColor);
+    }
+
+    private void ConfigurePrototypeHitboxes()
+    {
+        if (!configurePrototypeHitboxes || transform.Find("Head_Critical") == null)
+        {
+            return;
+        }
+
+        CapsuleCollider bodyCollider = GetComponent<CapsuleCollider>();
+        if (bodyCollider == null)
+        {
+            return;
+        }
+
+        bodyCollider.height = bodyColliderHeight;
+        bodyCollider.center = bodyColliderCenter;
     }
 
     private void Update()

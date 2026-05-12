@@ -505,6 +505,11 @@ public class PlayerWeaponController : MonoBehaviour
 
     private void SpawnImpactMarker(Vector3 point, Vector3 normal, bool hitDamageable, bool critical)
     {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
         GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         marker.name = hitDamageable ? "Hit Marker" : "Impact Marker";
         marker.transform.position = point + normal * 0.015f;

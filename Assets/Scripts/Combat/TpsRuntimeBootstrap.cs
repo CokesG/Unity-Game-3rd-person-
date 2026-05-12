@@ -37,12 +37,26 @@ public static class TpsRuntimeBootstrap
         body.name = name;
         body.transform.position = position;
         body.transform.localScale = new Vector3(0.8f, 1f, 0.8f);
-        body.AddComponent<TargetDummy>();
 
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head_Critical";
         head.transform.SetParent(body.transform);
         head.transform.localPosition = new Vector3(0f, 0.72f, 0f);
         head.transform.localScale = Vector3.one * 0.34f;
+
+        ConfigurePrototypeTargetCollider(body);
+        body.AddComponent<TargetDummy>();
+    }
+
+    private static void ConfigurePrototypeTargetCollider(GameObject body)
+    {
+        CapsuleCollider bodyCollider = body.GetComponent<CapsuleCollider>();
+        if (bodyCollider == null)
+        {
+            return;
+        }
+
+        bodyCollider.height = 1.35f;
+        bodyCollider.center = new Vector3(0f, -0.22f, 0f);
     }
 }

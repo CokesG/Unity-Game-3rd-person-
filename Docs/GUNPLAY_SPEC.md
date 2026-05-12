@@ -1,6 +1,6 @@
 # Gunplay Spec
 
-Last updated: 2026-05-09
+Last updated: 2026-05-12
 
 ## Goal
 
@@ -81,6 +81,7 @@ Camera recoil yaw: 0.18
 - Empty magazine starts empty reload when firing.
 - Damageable dummies flash and reset after defeat.
 - Head child named `Head_Critical` produces critical damage.
+- Prototype target body colliders must not occlude `Head_Critical`; the default `TargetDummy` shortens its capsule when a `Head_Critical` child exists.
 - Hitmarker appears on hit.
 - Miss feedback is weaker than hit feedback.
 - Reticle turns red when muzzle is blocked.

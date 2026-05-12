@@ -1,6 +1,6 @@
 # Tuning Log
 
-Last updated: 2026-05-09
+Last updated: 2026-05-12
 
 ## 2026-05-09 - TPS Vertical Slice V1
 
@@ -70,3 +70,20 @@ Manual test:
 - Expected: one jump only, then no second jump until the player lands.
 - Press Space just before landing.
 - Expected: buffered jump can still fire after the grounded reset window.
+
+## 2026-05-12 - MCP Hitbox Validation
+
+Validated through Unity MCP:
+
+- Unity MCP connection and `Unity_ReadConsole` tool calls are working.
+- Console was clean for warnings/errors before gameplay probes.
+- Default prototype target geometry allowed the body capsule to intercept rays aimed at `Head_Critical`.
+
+Implemented:
+
+- `TargetDummy` now shortens its prototype body capsule when a `Head_Critical` child exists, so critical hit rays reach the head collider first.
+- Impact markers are runtime-only, keeping MCP/editor-side validation from leaving temporary colliders in the scene.
+
+Follow-up:
+
+- Repeat Play mode tests in `TPS_TestGym` with `F1` overlay visible and confirm critical hits, stacked damage, reload countdown, observed RPM, and recent DPS all move as expected.

@@ -206,15 +206,29 @@ public static class TpsTestGymBuilder
         body.transform.localScale = new Vector3(0.8f, 1f, 0.8f);
         body.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("MAT_Target", new Color(0.1f, 0.75f, 0.95f));
 
-        TargetDummy dummy = body.AddComponent<TargetDummy>();
-        AssignObject(dummy, "visualRenderer", body.GetComponent<Renderer>());
-
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head_Critical";
         head.transform.SetParent(body.transform);
         head.transform.localPosition = new Vector3(0f, 0.72f, 0f);
         head.transform.localScale = Vector3.one * 0.34f;
         head.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("MAT_TargetHead", new Color(1f, 0.85f, 0.2f));
+
+        ConfigurePrototypeTargetCollider(body);
+
+        TargetDummy dummy = body.AddComponent<TargetDummy>();
+        AssignObject(dummy, "visualRenderer", body.GetComponent<Renderer>());
+    }
+
+    private static void ConfigurePrototypeTargetCollider(GameObject body)
+    {
+        CapsuleCollider bodyCollider = body.GetComponent<CapsuleCollider>();
+        if (bodyCollider == null)
+        {
+            return;
+        }
+
+        bodyCollider.height = 1.35f;
+        bodyCollider.center = new Vector3(0f, -0.22f, 0f);
     }
 
     private static void CreateHud(ThirdPersonCameraController cameraController, PlayerWeaponController weaponController, ThirdPersonMotor motor)
