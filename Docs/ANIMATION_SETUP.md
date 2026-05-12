@@ -6,15 +6,18 @@ Current controller:
 
 `Assets/Animations/PlayerHumanoid.controller`
 
-The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle`, `Walk`, `Run`, the safe Nightfall-native jump, and the vetted Mixamo crouch pass are promoted to the live controller:
+The live controller is assigned to the full-quality Nightfall visual in `SampleScene`. At the moment, `Idle`, `Walk`, `Run`, and the safe Nightfall-native jump are promoted to the live controller:
 
 - `Idle`: `Nightfall_FullQuality_Idle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Idle_Baked.fbx`
 - `Walk`: `Nightfall_FullQuality_Walk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Walk_Baked.fbx`
 - `Run`: `Nightfall_FullQuality_Run_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_Run_Baked.fbx`
 - `Jump Start`: `Nightfall_FullQuality_JumpSafe_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_JumpSafe_Baked.fbx`
-- `Crouch Idle`: `Nightfall_Mixamo_CrouchIdle_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_CrouchIdle_Baked.fbx`
-- `Crouch Walk`: `Nightfall_Mixamo_CrouchWalk_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_CrouchWalk_Baked.fbx`
-- `Stand Up`: `Nightfall_Mixamo_StandUp_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked/NightfallVanguard_Mixamo_StandUp_Baked.fbx`
+- `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
+- `Crouch Idle`: held final frame of `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`, state speed `0`
+- `Crouch Walk`: `Crouch Walk Directional` blend tree using `User_Crouch_Walk_Forward`, `Back`, `Left`, and `Right` from `Assets/Animations/NightfallVanguard/UserCrouchWalk/`
+- `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
+- Grounded visual foot/toe correction in `PlayerAnimationController` keeps the visual child aligned to the `CharacterController` capsule foot without moving the gameplay root.
+- `Mixamo_CrouchingIdle`, `Mixamo_CrouchWalking`, `Nightfall_Mixamo_CrouchIdle_Baked`, `Nightfall_Mixamo_CrouchWalk_Baked`, and `Nightfall_Mixamo_StandUp_Baked` are quarantined because they deform or lean the live Nightfall rig.
 
 Mixamo import rule:
 
@@ -23,10 +26,33 @@ Mixamo import rule:
 - Use `Avatar Definition: Create From This Model` for Mixamo animation-only FBXs because Mixamo uses its own skeleton. Unity retargets that humanoid source avatar onto the Nightfall humanoid avatar at runtime.
 - For this project, the Mixamo source files are then baked in Blender onto the Nightfall skeleton with `Tools/Blender/bake_mixamo_to_nightfall.py`, and the live controller uses those baked Nightfall FBXs.
 - Keep root motion off for now. The CharacterController still owns real movement, jump height, collision, and landing.
+- Crouch-walk FBXs must preserve their original root Y pose. For those clips, keep `Root Transform Position (Y)` based on Original / not feet-normalized. If Unity normalizes them from feet, the live rig can stand upright while the state says `Crouch Move`.
+- Current crouch movement tuning: gameplay crouch speed is `2.4`, `Crouch Walk` state speed is `1.2`, and each directional crouch-walk child clip uses `TimeScale 1.15`. These values are a first pass to reduce the slow-motion feel without making crouch movement read like a full jog.
 
 Assign additional clips to the live Player visual only after clips are verified in the sandbox and confirmed to be compatible with the live full-quality rig.
 
 Keep `Apply Root Motion` disabled.
+
+## Animation Rigging Helpers
+
+`com.unity.animation.rigging` is now listed in `Packages/manifest.json` at version `1.4.0`.
+
+After Unity Package Manager finishes resolving the package, run:
+
+```text
+Tools/TPS/Nightfall/Setup Animation Rigging Helpers
+```
+
+That setup menu:
+
+- Adds a `RigBuilder` to the Humanoid Animator object.
+- Creates `Nightfall_RuntimeRig` under the Animator.
+- Adds a Rig layer for runtime constraints.
+- Creates left/right foot IK targets and hints.
+- Creates disabled left/right hand IK targets for later weapon grip work.
+- Adds `NightfallFootIKTargets`, which raycasts each foot target to the ground.
+
+Foot IK should be used as a polish/correction layer for idle, walk, run, crouch, and slopes. It must not move the `Player` root, enable root motion, or replace the `CharacterController` movement system.
 
 Sandbox controller:
 
@@ -44,7 +70,9 @@ Linked Meshy GLB animation sandbox:
 
 `Assets/Scenes/AnimationSandbox_Nightfall_Linked.unity`
 
-This scene uses cloned clips from the new labeled Meshy GLBs and a sandbox-only armature rename so the generic GLB curves bind to the current full-quality model. See `Docs/NIGHTFALL_ANIMATION_LINKING.md`.
+This scene uses the full-quality model and the safe baked Nightfall clips for one-state-at-a-time review. See `Docs/NIGHTFALL_ANIMATION_LINKING.md`.
+
+Current binding rule: the active Nightfall model instance must expose its armature child as `NightfallVanguard_FullQuality_Armature`. If the child is named only `Armature`, Unity may still display a valid Humanoid Avatar but the Animator will not resolve bones, leaving the character static while states appear to change.
 
 ## Parameters
 
@@ -112,7 +140,11 @@ Only copy clips into `PlayerHumanoid.controller` after they pass sandbox testing
 
 The live `PlayerAnimationController` is parameter-driven by default. Leave `driveAnimatorStateMachine` disabled until the Animator transitions or blend trees are intentionally built.
 
-Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal WASD movement uses `Run`, while Ctrl slow walk and aim movement use `Walk` until their own clips are promoted. Crouch idle/walk/stand use Mixamo clips. Jump uses a short, safe, Nightfall-native clip built from the working run rig. Sprint is still intentionally unpromoted.
+Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal WASD movement uses `Run`, while Ctrl slow walk and aim movement use safe idle/walk visuals until their own clips are promoted. Jump uses a short, safe, Nightfall-native clip built from the working run rig. Sprint is still intentionally unpromoted.
+
+`PlayerAnimationController.allowCrouchAnimationClips` is enabled in `SampleScene` for the current user crouch set. `standToCrouchClipPromoted`, `crouchIdleClipPromoted`, `crouchWalkClipPromoted`, and `standUpClipPromoted` are true. `forceCrouchWalkWhenMoving` is also true so stale scene checkboxes cannot prevent crouch locomotion from activating. While crouched and stationary, the Animator holds the reviewed crouch pose. While crouched and moving, the `Crouch Walk Directional` Cartesian 2D blend tree uses `MovementX` and `MovementY` so WASD can select forward, backward, left, and right crouch-walk clips. The tree has a center held-crouch pose, and movement is allowed to interrupt the crouch-down transition so crouch locomotion is visible immediately after input.
+
+If crouch suddenly looks diagonal or asymmetrical again, inspect the `SampleScene` prefab instance before touching animation clips. The scene should not store individual Nightfall bone `m_LocalPosition`, `m_LocalRotation`, or `m_LocalEulerAnglesHint` overrides. Animation clips own bone poses at runtime; the scene should only store root placement, Animator settings, and gameplay component references.
 
 Default movement is intentionally run/jog for shooter feel. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
 
@@ -176,6 +208,8 @@ Animation not playing:
 - Confirm the Animator Controller is assigned to `CharacterVisual`.
 - Confirm the state has a Motion clip assigned.
 - Confirm the FBX rig is Humanoid and avatar is valid.
+- Confirm the armature child is named `NightfallVanguard_FullQuality_Armature`.
+- In the linked sandbox, run `Tools/TPS/Nightfall/Repair Animation Sandbox` and check that only one HUD/control panel appears.
 
 Moonwalking:
 

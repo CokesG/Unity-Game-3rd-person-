@@ -1,6 +1,6 @@
 # Nightfall Animation Linking
 
-Last updated: 2026-05-10
+Last updated: 2026-05-11
 
 ## What Was Added
 
@@ -21,15 +21,22 @@ Current live promotion:
   - `NightfallVanguard_FullQuality_JumpRun_Cropped_Baked.fbx`, cropped from `Jump_Run_withSkin.glb` frames `7-17` so the obvious run-up is removed.
   - `NightfallVanguard_FullQuality_AirLoop_Procedural.fbx`
   - `NightfallVanguard_FullQuality_Land_Procedural.fbx`
-- The live crouch pass now uses Mixamo FBX animation-only clips from `Assets/Animations/NightfallVanguard/Mixamo`.
+- The failed Blender-baked Mixamo crouch clips produced sideways/floating/deformed poses on the live rig and remain quarantined.
+- The Unity Humanoid-retargeted crouch transition clips passed sandbox review and are now promoted live:
+  - `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
+  - `Crouch Idle`: held final frame of `User_Stand_To_Crouch`, state speed `0`
+  - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
+- The current crouch animation test promotes transition down, held crouch idle, and transition up. `allowCrouchAnimationClips` is enabled, but crouch-walk promotion is disabled. While crouched, the Animator should hold the final frame of `User_Stand_To_Crouch`.
+- Current diagnosis: the Blender bake path is the problem. `Tools/Blender/bake_mixamo_to_nightfall.py` uses local `COPY_TRANSFORMS` constraints from Mixamo bones to Nightfall bones. That does not account for different rest-pose bone axes, so crouch poses can rotate the Nightfall rig into a folded/floating shape even when the original Mixamo source clip is reasonable.
 - Mixamo jump clips are currently quarantined:
   - `Mixamo_Jumping.fbx` was baked into `Nightfall_Mixamo_JumpFull_Baked`, but the preview leans too aggressively and causes a ragdoll-like visual in live play.
   - `Nightfall_Mixamo_JumpStart_Baked`, `Nightfall_Mixamo_JumpAir_Baked`, and `Nightfall_Mixamo_JumpLand_Baked` exist as sandbox/reference clips, but they are not active in `SampleScene`.
   - `Mixamo_CrouchingIdle.fbx` is baked into `Nightfall_Mixamo_CrouchIdle_Baked`.
   - `Mixamo_CrouchWalking.fbx` is baked into `Nightfall_Mixamo_CrouchWalk_Baked`.
   - `Mixamo_CrouchedToStanding.fbx` is baked into `Nightfall_Mixamo_StandUp_Baked`.
-- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45`, the baked walk clip for `Walk` at speed `1.0`, the baked run clip for `Run` at speed `1.0`, the safe Nightfall-native jump clip for `Jump Start`, and the Mixamo clips for crouch.
-- The live `PlayerAnimationController` has code-driven state switching enabled with `walkClipPromoted` and `runClipPromoted` true. Normal WASD movement uses `Run`; Ctrl slow walk, aim movement, and crouch movement use `Walk` until their own clips are promoted.
+- `Assets/Animations/PlayerHumanoid.controller` uses the baked idle clip for `Idle` at speed `0.45`, the baked walk clip for `Walk` at speed `1.0`, the baked run clip for `Run` at speed `1.0`, the safe Nightfall-native jump clip for `Jump Start`, and the reviewed Mixamo transition clips for `Stand To Crouch`, held `Crouch Idle`, and `Stand Up`.
+- The live `PlayerAnimationController` has code-driven state switching enabled with `walkClipPromoted` and `runClipPromoted` true. Normal WASD movement uses `Run`; Ctrl slow walk and aim movement use `Walk` until their own clips are promoted. Crouch gameplay remains enabled, and crouch visuals currently test only the new user-provided transition down/up clips.
+- Some Humanoid clips can carry vertical root/body offset, so live play applies visual-only grounding while grounded. The `Player` root and `CharacterController` remain untouched.
 - The locomotion feel is intentionally shooter-style default run/jog instead of keyboard walk-to-run gating. See `Docs/LOCOMOTION_FEEL_REFERENCE.md`.
 - The raw `Jump_Run_withSkin.glb` remains a moving-jump reference because its preview includes running before the jump. It is not used by the live player.
 - Sprint, combat, roll, slide, and ability clips are still sandbox-only until each one is baked or retargeted and reviewed.
@@ -74,8 +81,9 @@ Current finding:
 
 - The GLB clips are generic transform clips, not Unity Humanoid clips.
 - Their binding paths start with `Armature/Hips/...`.
-- The current full-quality FBX rig used in the live Player has a different armature object name.
-- The linked sandbox scene uses the existing full-quality FBX model but renames the sandbox instance armature to `Armature`, so the cloned GLB clips can bind correctly.
+- The current full-quality FBX Avatar expects the armature object name `NightfallVanguard_FullQuality_Armature`.
+- If a scene instance loads with the shorter child name `Armature`, Unity can show a valid Humanoid Avatar but still fail to resolve bones on the Animator. The result is a static/T-pose-looking mannequin even though the Animator state and clip change.
+- The linked sandbox now keeps the full-quality model armature named `NightfallVanguard_FullQuality_Armature` and uses the baked Nightfall FBX clips for the safe states.
 - The raw GLB `.anim` clips must not be assigned directly to the live `PlayerHumanoid.controller`. They can deform or stretch the full-quality mesh because they animate transform paths from the source GLB skeleton instead of using Unity Humanoid Avatar retargeting.
 
 Do not assign these clips directly to the live Player until they are reviewed in the sandbox.
@@ -95,8 +103,9 @@ Practical rule for this project:
 - Sandbox GLB clips are preview-only until baked/retargeted.
 - The live Player should use Humanoid FBX clips or baked clips exported specifically for `NightfallVanguard_ModelOnly_FullQuality_NoAnimations.fbx`.
 - Mixamo FBX animation-only clips should be imported as Humanoid with `Avatar Definition: Create From This Model`. Do not copy the Nightfall avatar onto Mixamo files because the skeletons are different.
-- The live promoted clips are the Blender-baked Nightfall FBXs under `Assets/Art/Characters/NightfallVanguard/Exports/MixamoBaked`. Those use the Nightfall skeleton directly and can copy the Nightfall avatar.
+- Live promoted locomotion clips should either be baked against the Nightfall skeleton under `Assets/Art/Characters/NightfallVanguard/Exports` or come from a reviewed Unity Humanoid-retargeted source clip. Mixamo transition clips can stay as Humanoid source FBXs only after sandbox and live review.
 - Do not rename live skeleton bones to force raw `.anim` binding. That can make the mesh explode.
+- The approved scene repair is only the armature object name: `Armature` -> `NightfallVanguard_FullQuality_Armature`, followed by `Animator.Rebind()`.
 
 ## Clip Mapping
 
@@ -109,9 +118,10 @@ Practical rule for this project:
 | Jump Start | `Nightfall_FullQuality_JumpSafe_Baked` |
 | Falling / In Air | inactive/reference: `Nightfall_Mixamo_JumpAir_Baked` |
 | Landing | inactive/reference: `Nightfall_Mixamo_JumpLand_Baked` |
-| Crouch Idle | `Nightfall_Mixamo_CrouchIdle_Baked` |
-| Crouch Walk | `Nightfall_Mixamo_CrouchWalk_Baked` |
-| Stand Up | `Nightfall_Mixamo_StandUp_Baked` |
+| Stand To Crouch | live: `User_Stand_To_Crouch` |
+| Crouch Idle | live: held final frame of `User_Stand_To_Crouch` |
+| Crouch Walk | live: `Crouch Walk Directional` blend tree using user Mixamo forward/back/left/right clips |
+| Stand Up | live: `User_Crouch_To_Stand` |
 | Running Jump Preview | `Nightfall_Mixamo_RunningJump_Baked` |
 | Aim Walk / Strafe | `Nightfall_AimWalkStrafe.anim` |
 | Slide | `Nightfall_Slide.anim` |
@@ -144,14 +154,14 @@ Hotkeys:
 ```text
 1 Idle
 2 Walk
-3 Run
-4 Sprint
-5 Jump
-6 Aim Walk / Strafe
-7 Slide
-8 Attack Placeholder
-9 Ability Placeholder
-0 Roll Dodge
+3 Run/Jog
+4 Jump Start
+5 Falling / In Air
+6 Landing
+7 Stand -> Crouch
+8 Crouched Idle
+9 Crouched Walk
+0 Crouch -> Stand
 ```
 
 Review one clip at a time.

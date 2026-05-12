@@ -4,6 +4,13 @@ import sys
 import bpy
 
 
+# Experimental only.
+#
+# This copies Mixamo local bone transforms onto the Nightfall skeleton without
+# rest-pose/axis compensation. That can be useful for rough review clips, but it
+# is not safe for live promotion when source and target bone orientations differ.
+# The crouch/stand-up test deformed the live rig for this reason. Prefer Unity
+# Humanoid retargeting or a corrected Blender retarget with rest-pose offsets.
 BONE_MAP = {
     "Hips": "Hips",
     "Spine": "Spine02",

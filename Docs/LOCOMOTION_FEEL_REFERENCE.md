@@ -1,6 +1,6 @@
 # Locomotion Feel Reference
 
-Last updated: 2026-05-10
+Last updated: 2026-05-12
 
 ## Current Rule
 
@@ -15,7 +15,7 @@ Current tuning:
 - Holding Shift requests sprint speed immediately.
 - Until a true sprint clip is promoted, sprint speed still uses the `Run` visual.
 - Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
-- Crouch uses the promoted Mixamo `Crouch Idle`, `Crouch Walk`, and `Stand Up` clips.
+- Crouch gameplay is active. Stand-to-crouch, crouch idle, crouch walk, and crouch-to-stand are live-promoted. Grounded visual grounding uses foot/toe bones first and renderer bounds only as a fallback so the visual child can be corrected without moving the `Player` root or `CharacterController`.
 - Jump uses a short safe Nightfall-native `Jump Start` clip while the physical jump stays controller-driven and tuned to a low, snappy arc (`jumpHeight` `0.5625`, `gravity` `-22`, falling gravity multiplier `1.5`). Falling and landing clips remain disabled until clean clips pass review.
 - Crossfade is `0.18` seconds so state changes do not snap.
 
@@ -32,6 +32,17 @@ References:
 - Unity Blend Trees: https://docs.unity.cn/Manual/class-BlendTree.html
 - Unity Animation Transitions: https://docs.unity.cn/Manual/class-Transition.html
 - Unity 1D Blending and thresholds: https://docs.unity3d.com/Manual/BlendTree-1DBlending.html
+
+## Tooling Shortlist
+
+We are not using several Unity packages that would speed this up:
+
+- `com.unity.cinemachine`: use for the third-person follow/aim camera instead of growing a custom camera rig.
+- `com.unity.animation.rigging`: use Two Bone IK and aim constraints for feet, hands, weapon aim, and upper-body correction.
+- Unity Starter Assets Third Person: use as a reference implementation, not as a full replacement, because our controller already has shooter-specific rules.
+- OpenKCC: consider later if CharacterController collision/grounding becomes the blocker.
+
+These packages will not remove animation cleanup work, but they can reduce the amount of custom camera, IK, and controller infrastructure we maintain.
 
 ## Near-Term Plan
 

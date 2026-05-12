@@ -268,6 +268,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 9100000, guid: 2d09f26cdf79a1149892d963a314a0b8, type: 2}
     - target: {fileID: 5866666021909216657, guid: bc73f8b53d40f744d874caec22d70c99, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: bc73f8b53d40f744d874caec22d70c99, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
       objectReference: {fileID: 0}
@@ -645,7 +649,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.3916608
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -775,6 +779,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 2d09f26cdf79a1149892d963a314a0b8, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_AnimatePhysics
       value: 0
@@ -1107,9 +1115,18 @@ MonoBehaviour:
   landClipPromoted: 0
   crouchIdleClipPromoted: 1
   crouchWalkClipPromoted: 1
+  standToCrouchClipPromoted: 1
   standUpClipPromoted: 1
+  allowCrouchAnimationClips: 1
+  forceCrouchWalkWhenMoving: 1
   landingStateDuration: 0.1
-  standUpStateDuration: 0.28
+  standToCrouchStateDuration: 0.85
+  standUpStateDuration: 0.85
+  crouchIdleHoldNormalizedTime: 0.95
+  groundVisualWhenGrounded: 1
+  preferFootBoneGrounding: 1
+  crouchVisualGroundPadding: 0.02
+  visualGroundResetSpeed: 16
   currentMovementState: 
   currentSpeed: 0
   currentMovementX: 0
@@ -1125,6 +1142,8 @@ MonoBehaviour:
   currentIsSliding: 0
   currentUsesRunVisual: 0
   currentLandingStateTime: 0
+  currentCrouchTransitionStateTime: 0
+  currentVisualGroundOffset: 0
 --- !u!114 &951686970
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1141,7 +1160,7 @@ MonoBehaviour:
   runSpeed: 5.5
   sprintSpeed: 7.25
   aimSpeed: 3
-  crouchSpeed: 2
+  crouchSpeed: 2.4
   rotationSpeed: 15
   normalAcceleration: 22
   sprintAcceleration: 34

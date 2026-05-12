@@ -9,7 +9,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float runSpeed = 5.5f;
     [SerializeField] private float sprintSpeed = 7.25f;
     [SerializeField] private float aimSpeed = 3.0f;
-    [SerializeField] private float crouchSpeed = 2.0f;
+    [SerializeField] private float crouchSpeed = 2.4f;
     [SerializeField] private float rotationSpeed = 15f;
 
     [Header("Feel")]
@@ -587,9 +587,11 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         int mask = groundMask.value == 0 ? Physics.DefaultRaycastLayers : groundMask.value;
         float radius = Mathf.Max(controller.radius * 0.95f, 0.05f);
-        Vector3 worldCenter = transform.position + standingCenter;
-        Vector3 bottom = worldCenter + Vector3.down * (standingHeight * 0.5f - radius) + Vector3.up * 0.05f;
-        Vector3 top = worldCenter + Vector3.up * (standingHeight * 0.5f - radius);
+        Vector3 currentCenter = transform.position + controller.center;
+        float currentFootY = currentCenter.y - controller.height * 0.5f;
+        Vector3 capsuleBase = new Vector3(currentCenter.x, currentFootY, currentCenter.z);
+        Vector3 bottom = capsuleBase + Vector3.up * (radius + 0.08f);
+        Vector3 top = capsuleBase + Vector3.up * Mathf.Max(standingHeight - radius, radius + 0.1f);
         Collider[] hits = Physics.OverlapCapsule(bottom, top, radius, mask, QueryTriggerInteraction.Ignore);
 
         foreach (Collider hit in hits)

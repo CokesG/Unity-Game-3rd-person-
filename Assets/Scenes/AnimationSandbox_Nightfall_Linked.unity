@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -298,9 +298,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5316342638311548477, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
+      propertyPath: m_Name
+      value: NightfallVanguard_FullQuality_Armature
+      objectReference: {fileID: 0}
     - target: {fileID: 8771091787928289351, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
       propertyPath: m_Name
       value: NightfallVanguard_RawAnimationPreviewRig
+      objectReference: {fileID: 0}
+    - target: {fileID: 8771091787928289351, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -315,16 +323,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8771091787928289351, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
   m_PrefabInstance: {fileID: 431429174}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &431429176 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: -4748361991329772099, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
-  m_PrefabInstance: {fileID: 431429174}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &431429177 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: 6a48c476fed06d34981f28acad1a1f71, type: 3}
-  m_PrefabInstance: {fileID: 431429174}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &431429178
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -332,19 +330,19 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 431429175}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e6a1c8f5b2344e9b0d2c4a16f6e3a8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NightfallAnimationSandboxDriver
-  animator: {fileID: 431429176}
+  animator: {fileID: 1227788879}
   previewCamera: {fileID: 1698029933}
-  previewTarget: {fileID: 431429177}
+  previewTarget: {fileID: 1227788881}
   crossFadeTime: 0.12
   previewTargetOffset: {x: 0, y: 1.05, z: 0}
   previewCameraOffset: {x: 0, y: 1.35, z: -4.25}
   previewCameraFieldOfView: 35
-  showHud: 1
+  showHud: 0
   currentStateIndex: 0
 --- !u!1001 &1227788877
 PrefabInstance:
@@ -360,7 +358,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.17105879
+      value: 1.1829253
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -396,20 +394,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_Name
-      value: NightfallVanguard_LinkedAnimationRig
+      value: NightfallVanguard_ModelOnly_FullQuality_NoAnimations(Clone)
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3752487752797741121, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_Name
-      value: Armature
+      value: NightfallVanguard_FullQuality_Armature
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 3742dee421521304c97e5f5783a0a54f, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -445,14 +447,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NightfallAnimationSandboxDriver
   animator: {fileID: 1227788879}
-  previewCamera: {fileID: 0}
-  previewTarget: {fileID: 0}
+  previewCamera: {fileID: 1698029933}
+  previewTarget: {fileID: 1227788881}
   crossFadeTime: 0.12
   previewTargetOffset: {x: 0, y: 1.05, z: 0}
   previewCameraOffset: {x: 0, y: 1.35, z: -4.25}
   previewCameraFieldOfView: 35
   showHud: 1
   currentStateIndex: 0
+--- !u!4 &1227788881 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 285de068dc5a04d44a1447ae2264406f, type: 3}
+  m_PrefabInstance: {fileID: 1227788877}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1376040056
 GameObject:
   m_ObjectHideFlags: 0
@@ -755,8 +762,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1698029932}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.035228394, y: 0, z: 0, w: 0.99937934}
-  m_LocalPosition: {x: 0, y: 1.35, z: -4.25}
+  m_LocalRotation: {x: 0.040806852, y: 0, z: 0, w: 0.9991671}
+  m_LocalPosition: {x: 0.0015546042, y: 1.5499177, z: -4.3869944}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

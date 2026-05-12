@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(ThirdPersonMotor))]
 [RequireComponent(typeof(PlayerInputHandler))]
 public class PlayerAnimationController : MonoBehaviour
 {
+    private const string NightfallExpectedArmatureName = "NightfallVanguard_FullQuality_Armature";
+    private const string NightfallLegacyArmatureName = "Armature";
+
     [Header("References")]
     [SerializeField] private Animator animator;
     [SerializeField] private Transform characterVisual;
@@ -23,9 +27,21 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool landClipPromoted;
     [SerializeField] private bool crouchIdleClipPromoted;
     [SerializeField] private bool crouchWalkClipPromoted;
+    [SerializeField] private bool standToCrouchClipPromoted;
     [SerializeField] private bool standUpClipPromoted;
+    [SerializeField] private bool allowCrouchAnimationClips;
+    [SerializeField] private bool forceCrouchWalkWhenMoving = true;
     [SerializeField] private float landingStateDuration = 0.22f;
-    [SerializeField] private float standUpStateDuration = 0.28f;
+    [SerializeField] private float standToCrouchStateDuration = 0.6f;
+    [SerializeField] private float standUpStateDuration = 0.6f;
+    [SerializeField, Range(0f, 0.99f)] private float crouchIdleHoldNormalizedTime = 0.95f;
+
+    [Header("Visual Grounding")]
+    [FormerlySerializedAs("groundVisualDuringCrouch")]
+    [SerializeField] private bool groundVisualWhenGrounded = true;
+    [SerializeField] private bool preferFootBoneGrounding = true;
+    [SerializeField] private float crouchVisualGroundPadding = 0.02f;
+    [SerializeField] private float visualGroundResetSpeed = 16f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementState;
@@ -43,9 +59,12 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool currentIsSliding;
     [SerializeField] private bool currentUsesRunVisual;
     [SerializeField] private float currentLandingStateTime;
+    [SerializeField] private float currentCrouchTransitionStateTime;
+    [SerializeField] private float currentVisualGroundOffset;
 
     private ThirdPersonMotor motor;
     private PlayerInputHandler input;
+    private CharacterController controller;
 
     // Parameter names
     private int speedHash;
@@ -76,15 +95,27 @@ public class PlayerAnimationController : MonoBehaviour
     private const string LandingState = "Base Layer.Landing";
     private const string CrouchIdleState = "Base Layer.Crouch Idle";
     private const string CrouchWalkState = "Base Layer.Crouch Walk";
+    private const string StandToCrouchState = "Base Layer.Stand To Crouch";
     private const string StandUpState = "Base Layer.Stand Up";
+    private static readonly HumanBodyBones[] VisualGroundingBones =
+    {
+        HumanBodyBones.LeftFoot,
+        HumanBodyBones.RightFoot,
+        HumanBodyBones.LeftToes,
+        HumanBodyBones.RightToes,
+    };
 
     private string currentAnimatorStatePath;
     private readonly HashSet<int> availableParameterHashes = new HashSet<int>();
     private RuntimeAnimatorController cachedController;
     private float landingStateTimer;
+    private float standToCrouchStateTimer;
     private float standUpStateTimer;
     private bool wasCrouchingLastFrame;
     private int currentAnimatorStateHash;
+    private Vector3 visualBaseLocalPosition;
+    private Renderer[] visualRenderers;
+    private bool hasVisualBaseLocalPosition;
 
     private void Awake()
     {
@@ -106,6 +137,9 @@ public class PlayerAnimationController : MonoBehaviour
 
         motor = GetComponent<ThirdPersonMotor>();
         input = GetComponent<PlayerInputHandler>();
+        controller = GetComponent<CharacterController>();
+
+        CacheVisualGroundingReferences();
 
         speedHash = Animator.StringToHash("Speed");
         movementXHash = Animator.StringToHash("MovementX");
@@ -128,7 +162,9 @@ public class PlayerAnimationController : MonoBehaviour
 
         if (animator != null)
         {
+            EnsureNightfallArmatureName(animator.transform);
             animator.applyRootMotion = false;
+            animator.Rebind();
             CacheAnimatorParameters();
         }
     }
@@ -152,8 +188,9 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsSliding = motor.IsSliding();
         currentUsesRunVisual = ShouldUseRunState();
         UpdateLandingStateTimer();
-        UpdateStandUpStateTimer();
+        UpdateCrouchTransitionStateTimers();
         currentLandingStateTime = landingStateTimer;
+        currentCrouchTransitionStateTime = Mathf.Max(standToCrouchStateTimer, standUpStateTimer);
         currentMovementState = ResolveMovementState();
 
         if (!animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
@@ -195,6 +232,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         wasCrouchingLastFrame = currentIsCrouching;
+        ApplyCrouchVisualGrounding();
     }
 
     public void TriggerPrimaryAttack() => SetTriggerIfAvailable(primaryAttackHash);
@@ -219,17 +257,25 @@ public class PlayerAnimationController : MonoBehaviour
         {
             targetState = AirState;
         }
-        else if (standUpStateTimer > 0f && standUpClipPromoted)
-        {
-            targetState = StandUpState;
-        }
-        else if (currentIsCrouching && currentSpeed > 0.1f && crouchWalkClipPromoted)
+        else if (currentIsCrouching && currentSpeed > 0.1f && CanUseCrouchWalkClip())
         {
             targetState = CrouchWalkState;
         }
-        else if (currentIsCrouching && crouchIdleClipPromoted)
+        else if (standToCrouchStateTimer > 0f && CanUseStandToCrouchClip())
+        {
+            targetState = StandToCrouchState;
+        }
+        else if (standUpStateTimer > 0f && CanUseStandUpClip())
+        {
+            targetState = StandUpState;
+        }
+        else if (currentIsCrouching && CanUseCrouchIdleClip())
         {
             targetState = CrouchIdleState;
+        }
+        else if (currentIsCrouching && CanUseStandToCrouchClip())
+        {
+            targetState = StandToCrouchState;
         }
         else if (currentIsSprinting && sprintClipPromoted)
         {
@@ -255,6 +301,7 @@ public class PlayerAnimationController : MonoBehaviour
         bool isFastOneShot = targetState == JumpState
             || targetState == AirState
             || targetState == LandingState
+            || targetState == StandToCrouchState
             || targetState == StandUpState;
         CrossFadeIfNeeded(targetState, isFastOneShot ? jumpCrossFadeTime : locomotionCrossFadeTime);
     }
@@ -273,19 +320,45 @@ public class PlayerAnimationController : MonoBehaviour
         }
     }
 
-    private void UpdateStandUpStateTimer()
+    private void UpdateCrouchTransitionStateTimers()
     {
-        if (!currentIsGrounded || currentIsCrouching)
+        if (!currentIsGrounded)
         {
+            standToCrouchStateTimer = 0f;
             standUpStateTimer = 0f;
             return;
         }
 
-        if (wasCrouchingLastFrame && standUpClipPromoted)
+        if (currentIsCrouching && !wasCrouchingLastFrame && CanUseStandToCrouchClip())
+        {
+            standToCrouchStateTimer = standToCrouchStateDuration;
+            standUpStateTimer = 0f;
+            return;
+        }
+
+        if (!currentIsCrouching && wasCrouchingLastFrame && CanUseStandUpClip())
         {
             standUpStateTimer = standUpStateDuration;
+            standToCrouchStateTimer = 0f;
+            return;
         }
-        else if (standUpStateTimer > 0f)
+
+        if (!currentIsCrouching)
+        {
+            standToCrouchStateTimer = 0f;
+        }
+
+        if (currentIsCrouching)
+        {
+            standUpStateTimer = 0f;
+        }
+
+        if (standToCrouchStateTimer > 0f)
+        {
+            standToCrouchStateTimer = Mathf.Max(0f, standToCrouchStateTimer - Time.deltaTime);
+        }
+
+        if (standUpStateTimer > 0f)
         {
             standUpStateTimer = Mathf.Max(0f, standUpStateTimer - Time.deltaTime);
         }
@@ -295,7 +368,27 @@ public class PlayerAnimationController : MonoBehaviour
     {
         return currentSpeed > 0.1f
             && walkClipPromoted
-            && (currentIsSlowWalking || currentIsAiming || (currentIsCrouching && !crouchWalkClipPromoted));
+            && (currentIsSlowWalking || currentIsAiming || (currentIsCrouching && !CanUseCrouchWalkClip() && !CanUseStandToCrouchClip()));
+    }
+
+    private bool CanUseCrouchIdleClip()
+    {
+        return allowCrouchAnimationClips && crouchIdleClipPromoted;
+    }
+
+    private bool CanUseCrouchWalkClip()
+    {
+        return allowCrouchAnimationClips && (crouchWalkClipPromoted || forceCrouchWalkWhenMoving);
+    }
+
+    private bool CanUseStandToCrouchClip()
+    {
+        return allowCrouchAnimationClips && standToCrouchClipPromoted;
+    }
+
+    private bool CanUseStandUpClip()
+    {
+        return allowCrouchAnimationClips && standUpClipPromoted;
     }
 
     private bool ShouldUseRunState()
@@ -332,7 +425,16 @@ public class PlayerAnimationController : MonoBehaviour
             }
         }
 
-        animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
+        if (stateName == CrouchIdleState)
+        {
+            animator.Play(targetStateHash, 0, crouchIdleHoldNormalizedTime);
+            animator.Update(0f);
+        }
+        else
+        {
+            animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
+        }
+
         currentAnimatorStatePath = stateName;
         currentAnimatorStateHash = targetStateHash;
     }
@@ -350,6 +452,171 @@ public class PlayerAnimationController : MonoBehaviour
         {
             availableParameterHashes.Add(parameter.nameHash);
         }
+    }
+
+    private void CacheVisualGroundingReferences()
+    {
+        if (characterVisual == null)
+        {
+            return;
+        }
+
+        visualBaseLocalPosition = characterVisual.localPosition;
+        visualRenderers = characterVisual.GetComponentsInChildren<Renderer>(false);
+        hasVisualBaseLocalPosition = true;
+    }
+
+    private void ApplyCrouchVisualGrounding()
+    {
+        if (!groundVisualWhenGrounded
+            || characterVisual == null
+            || !hasVisualBaseLocalPosition)
+        {
+            return;
+        }
+
+        bool shouldGroundVisual = currentIsGrounded
+            && !currentIsJumping
+            && !currentIsFalling
+            && !currentIsSliding;
+
+        if (!shouldGroundVisual)
+        {
+            float resetT = 1f - Mathf.Exp(-visualGroundResetSpeed * Time.deltaTime);
+            characterVisual.localPosition = Vector3.Lerp(characterVisual.localPosition, visualBaseLocalPosition, resetT);
+            currentVisualGroundOffset = characterVisual.localPosition.y - visualBaseLocalPosition.y;
+            return;
+        }
+
+        if (controller == null)
+        {
+            return;
+        }
+
+        float capsuleFootY = transform.position.y + controller.center.y - controller.height * 0.5f;
+        float targetMinY = capsuleFootY + crouchVisualGroundPadding;
+
+        if (preferFootBoneGrounding && TryGetLowestGroundingBoneY(out float lowestBoneY))
+        {
+            ApplyVisualWorldYOffset(targetMinY - lowestBoneY);
+            return;
+        }
+
+        if (!TryGetVisualBounds(out Bounds visualBounds))
+        {
+            return;
+        }
+
+        ApplyVisualWorldYOffset(targetMinY - visualBounds.min.y);
+    }
+
+    private void ApplyVisualWorldYOffset(float worldYOffset)
+    {
+        Vector3 localOffset = characterVisual.parent != null
+            ? characterVisual.parent.InverseTransformVector(Vector3.up * worldYOffset)
+            : Vector3.up * worldYOffset;
+
+        characterVisual.localPosition += localOffset;
+        currentVisualGroundOffset = characterVisual.localPosition.y - visualBaseLocalPosition.y;
+    }
+
+    private bool TryGetLowestGroundingBoneY(out float lowestBoneY)
+    {
+        lowestBoneY = float.PositiveInfinity;
+        if (animator == null || !animator.isHuman)
+        {
+            return false;
+        }
+
+        bool foundBone = false;
+        foreach (HumanBodyBones groundingBone in VisualGroundingBones)
+        {
+            Transform bone = animator.GetBoneTransform(groundingBone);
+            if (bone == null)
+            {
+                continue;
+            }
+
+            lowestBoneY = Mathf.Min(lowestBoneY, bone.position.y);
+            foundBone = true;
+        }
+
+        return foundBone;
+    }
+
+    private bool TryGetVisualBounds(out Bounds bounds)
+    {
+        bounds = default;
+        if (visualRenderers == null || visualRenderers.Length == 0)
+        {
+            visualRenderers = characterVisual != null
+                ? characterVisual.GetComponentsInChildren<Renderer>(false)
+                : null;
+        }
+
+        if (visualRenderers == null)
+        {
+            return false;
+        }
+
+        bool hasBounds = false;
+        foreach (Renderer visualRenderer in visualRenderers)
+        {
+            if (visualRenderer == null || !visualRenderer.enabled)
+            {
+                continue;
+            }
+
+            if (!hasBounds)
+            {
+                bounds = visualRenderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(visualRenderer.bounds);
+            }
+        }
+
+        return hasBounds;
+    }
+
+    private static void EnsureNightfallArmatureName(Transform animatorRoot)
+    {
+        if (animatorRoot == null)
+        {
+            return;
+        }
+
+        if (FindDeepChild(animatorRoot, NightfallExpectedArmatureName) != null)
+        {
+            return;
+        }
+
+        Transform legacyArmature = FindDeepChild(animatorRoot, NightfallLegacyArmatureName);
+        if (legacyArmature != null)
+        {
+            legacyArmature.name = NightfallExpectedArmatureName;
+        }
+    }
+
+    private static Transform FindDeepChild(Transform root, string childName)
+    {
+        if (root.name == childName)
+        {
+            return root;
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindDeepChild(root.GetChild(i), childName);
+            if (found != null)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private bool HasParameter(int hash)
@@ -395,8 +662,20 @@ public class PlayerAnimationController : MonoBehaviour
     private string ResolveMovementState()
     {
         if (motor.IsSliding()) return "Sliding";
-        if (standUpStateTimer > 0f && standUpClipPromoted) return "Stand Up";
-        if (motor.IsCrouching()) return currentSpeed > 0.1f ? "Crouch Move" : "Crouch Idle";
+        if (standToCrouchStateTimer > 0f && CanUseStandToCrouchClip()) return "Stand To Crouch";
+        if (standUpStateTimer > 0f && CanUseStandUpClip()) return "Stand Up";
+        if (motor.IsCrouching() && CanUseCrouchWalkClip() && currentSpeed > 0.1f) return "Crouch Move";
+        if (motor.IsCrouching() && CanUseCrouchIdleClip()) return "Crouch Idle";
+        if (motor.IsCrouching() && CanUseStandToCrouchClip())
+        {
+            return currentSpeed > 0.1f ? "Crouch Move / Held Pose" : "Crouch Hold";
+        }
+
+        if (motor.IsCrouching())
+        {
+            return currentSpeed > 0.1f ? "Crouch Gameplay / Walk Visual" : "Crouch Gameplay / Idle Visual";
+        }
+
         if (currentIsAiming) return currentSpeed > 0.1f ? "Aim Move" : "Aim Idle";
         if (!currentIsGrounded && jumpClipPromoted) return "Jumping";
         if (landingStateTimer > 0f && landClipPromoted) return "Landing";
