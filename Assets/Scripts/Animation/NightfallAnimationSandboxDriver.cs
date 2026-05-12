@@ -28,6 +28,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private int currentStateIndex;
 
     [Header("Crouch Walk Review")]
+    [SerializeField] private bool enableProceduralCrouchWalkReview;
     [SerializeField] private bool autoLoadProceduralCrouchWalkClips = true;
     [SerializeField] private AnimationClip[] crouchWalkReviewClips;
     [SerializeField] private int currentCrouchWalkReviewClipIndex;
@@ -181,8 +182,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             animator.Rebind();
             animator.Update(0f);
-            EnsureCrouchWalkReviewClips();
-            ApplyCrouchWalkReviewClip();
+            if (ShouldUseProceduralCrouchWalkReview())
+            {
+                EnsureCrouchWalkReviewClips();
+                ApplyCrouchWalkReviewClip();
+            }
         }
 
         FramePreviewCamera();
@@ -262,18 +266,31 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
         if (stateName == "Crouch Walk")
         {
-            EnsureCrouchWalkReviewClips();
-            ApplyCrouchWalkReviewClip();
+            if (ShouldUseProceduralCrouchWalkReview())
+            {
+                EnsureCrouchWalkReviewClips();
+                ApplyCrouchWalkReviewClip();
+            }
+            else
+            {
+                PlayAnimatorState("Crouch Idle", stateName, "Crouch-walk quarantined: showing crouch hold");
+                return;
+            }
         }
 
+        PlayAnimatorState(stateName);
+    }
+
+    private void PlayAnimatorState(string stateName, string displayStateName = null, string statusOverride = null)
+    {
         if (!TryResolveStateHash(stateName, out int stateHash))
         {
             statusText = "Missing Animator state: " + stateName;
             return;
         }
 
-        currentState = stateName;
-        statusText = "Playing: " + stateName;
+        currentState = displayStateName ?? stateName;
+        statusText = statusOverride ?? "Playing: " + stateName;
         animator.CrossFadeInFixedTime(stateHash, crossFadeTime, 0, 0f);
         animator.Update(1f / 60f);
         SnapAnimatorToGround();
@@ -281,7 +298,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private void EnsureCrouchWalkReviewClips()
     {
-        if (!autoLoadProceduralCrouchWalkClips || crouchWalkReviewClips != null && crouchWalkReviewClips.Length > 0)
+        if (!ShouldUseProceduralCrouchWalkReview() || !autoLoadProceduralCrouchWalkClips || crouchWalkReviewClips != null && crouchWalkReviewClips.Length > 0)
         {
             return;
         }
@@ -323,6 +340,12 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private void CycleCrouchWalkReviewClip(int direction)
     {
+        if (!ShouldUseProceduralCrouchWalkReview())
+        {
+            statusText = "Procedural crouch-walk review disabled";
+            return;
+        }
+
         EnsureCrouchWalkReviewClips();
         if (crouchWalkReviewClips == null || crouchWalkReviewClips.Length == 0)
         {
@@ -342,6 +365,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     private void ApplyCrouchWalkReviewClip()
     {
         if (animator == null || animator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
+        if (!ShouldUseProceduralCrouchWalkReview())
         {
             return;
         }
@@ -409,6 +437,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
             .Replace("Nightfall_FullQuality_", string.Empty)
             .Replace("_Procedural", string.Empty)
             .Replace('_', ' ');
+    }
+
+    private bool ShouldUseProceduralCrouchWalkReview()
+    {
+        return enableProceduralCrouchWalkReview;
     }
 
     private void LateUpdate()
@@ -584,6 +617,11 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private string GetCrouchWalkReviewText()
     {
+        if (!ShouldUseProceduralCrouchWalkReview())
+        {
+            return "Crouch-walk: quarantined - 9 shows safe crouch hold; authored walk set required";
+        }
+
         AnimationClip clip = GetCurrentCrouchWalkReviewClip();
         string clipText = clip != null ? ShortClipName(clip.name) : "no procedural clips loaded";
         return "Crouch-walk review: " + clipText + " | Q/E cycles directional candidates";

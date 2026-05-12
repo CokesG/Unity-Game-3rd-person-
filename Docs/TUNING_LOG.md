@@ -129,3 +129,17 @@ Validation:
 - Blender MCP preview shows clear left/right foot separation from the front.
 - Forward candidate sampled at `min_z = 0.015` and roughly `0.394m` left/right foot gap.
 - This remains sandbox-only; do not promote live crouch-walk until an authored or motion-captured crouch-walk set replaces the procedural placeholder.
+
+## 2026-05-12 - Procedural Crouch-Walk Quarantined
+
+Implemented:
+
+- Rejected the current procedural crouch-walk review lane after live sandbox screenshots still showed broken crouch-walk body/leg presentation.
+- Changed `NightfallAnimationSandboxDriver` so `9 Crouched Walk` defaults to the safe crouch hold instead of auto-loading procedural candidates.
+- Remapped the linked sandbox controller `Crouch Walk` state to the safe crouch hold so bypassing the driver cannot show the rejected procedural clip.
+- Left procedural candidate cycling behind the manual `enableProceduralCrouchWalkReview` debug toggle only.
+
+Validation:
+
+- Live `SampleScene` crouch-walk promotion remains off.
+- Next acceptable path is an authored or motion-captured directional crouch-walk set, not more default routing through the rejected procedural placeholder.
