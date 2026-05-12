@@ -43,6 +43,7 @@ public static class TpsRuntimeBootstrap
         head.transform.SetParent(body.transform);
         head.transform.localPosition = new Vector3(0f, 0.72f, 0f);
         head.transform.localScale = Vector3.one * 0.34f;
+        head.AddComponent<CriticalHitbox>();
 
         ConfigurePrototypeTargetCollider(body);
         body.AddComponent<TargetDummy>();

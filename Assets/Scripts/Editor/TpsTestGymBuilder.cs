@@ -211,6 +211,7 @@ public static class TpsTestGymBuilder
         head.transform.SetParent(body.transform);
         head.transform.localPosition = new Vector3(0f, 0.72f, 0f);
         head.transform.localScale = Vector3.one * 0.34f;
+        head.AddComponent<CriticalHitbox>();
         head.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("MAT_TargetHead", new Color(1f, 0.85f, 0.2f));
 
         ConfigurePrototypeTargetCollider(body);
@@ -283,6 +284,12 @@ public static class TpsTestGymBuilder
         rifle.slideSpreadAddDegrees = 1.4f;
         rifle.cameraRecoilPitch = 0.42f;
         rifle.cameraRecoilYaw = 0.18f;
+        rifle.recoilResetDelay = 0.25f;
+        rifle.recoilPitchRampPerShot = 0.035f;
+        rifle.maxRecoilPitchPerShot = 0.68f;
+        rifle.recoilYawPatternStep = 0.045f;
+        rifle.maxRecoilYawPattern = 0.28f;
+        rifle.recoilYawRandomness = 0.04f;
 
         AssetDatabase.CreateAsset(rifle, WeaponPath);
         return rifle;

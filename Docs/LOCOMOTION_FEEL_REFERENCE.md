@@ -11,7 +11,8 @@ Keyboard input is digital, so pressing `W` is full forward input. For a third-pe
 Current tuning:
 
 - Normal WASD uses `Run` visually.
-- `Left Ctrl` or `Right Ctrl` holds `SlowWalkPressed`, which uses walk speed and the `Walk` animation.
+- `Left Alt` or `Right Alt` holds `SlowWalkPressed`, which uses walk speed and the `Walk` animation.
+- `Left Ctrl` and `Right Ctrl` stay reserved for crouch/slide fallback behavior so sprint-slide input is not suppressed by slow-walk.
 - Holding Shift requests sprint speed immediately.
 - Until a true sprint clip is promoted, sprint speed still uses the `Run` visual.
 - Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
@@ -62,7 +63,7 @@ That will remove most hard cuts and make the animation follow actual movement sp
 In `PlayerAnimationController`:
 
 - `locomotionCrossFadeTime`: raise it slightly if transitions still feel sharp.
-- `walkClipPromoted`: keep true while Ctrl slow walk is available.
+- `walkClipPromoted`: keep true while Alt slow walk is available.
 - `sprintClipPromoted`: keep false until a real sprint clip has passed sandbox review.
 
 In `ThirdPersonMotor`:
@@ -76,4 +77,5 @@ In `ThirdPersonMotor`:
 In `PlayerInputHandler`:
 
 - `SlowWalkPressed` reads a `SlowWalk` action if one exists.
-- Until the input asset has a formal action, `Left Ctrl` and `Right Ctrl` are used as the fallback slow-walk hold.
+- Until the input asset has a formal action, `Left Alt` and `Right Alt` are used as the fallback slow-walk hold.
+- Keep Ctrl/C available for crouch and slide; do not bind slow-walk to Ctrl.

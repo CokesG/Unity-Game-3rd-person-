@@ -35,6 +35,9 @@ public class PlayerWeaponController : MonoBehaviour
     [SerializeField] private bool lastShotBlocked;
     [SerializeField] private float lastHitDistance;
     [SerializeField] private string lastRegisteredTargetName;
+    [SerializeField] private int recoilBurstShotIndex;
+    [SerializeField] private float lastRecoilPitchKick;
+    [SerializeField] private float lastRecoilYawKick;
     [SerializeField] private float metricsWindowSeconds = 5f;
 
     private PlayerInputHandler input;
@@ -68,6 +71,7 @@ public class PlayerWeaponController : MonoBehaviour
     public int TotalWorldHits => totalWorldHits;
     public int TotalRegisteredHits => totalRegisteredHits;
     public int TotalCriticalHits => totalCriticalHits;
+    public int TotalNonDamageWorldHits => Mathf.Max(0, totalWorldHits - totalRegisteredHits);
     public int TotalMisses => totalMisses;
     public int TotalBlockedShots => totalBlockedShots;
     public float TotalDamageDealt => totalDamageDealt;
@@ -78,6 +82,9 @@ public class PlayerWeaponController : MonoBehaviour
     public float LastHitDistance => lastHitDistance;
     public string LastHitName => debugLastHitName;
     public string LastRegisteredTargetName => lastRegisteredTargetName;
+    public int RecoilBurstShotIndex => recoilBurstShotIndex;
+    public float LastRecoilPitchKick => lastRecoilPitchKick;
+    public float LastRecoilYawKick => lastRecoilYawKick;
     public float Accuracy01 => totalShotsFired > 0 ? totalRegisteredHits / (float)totalShotsFired : 0f;
     public float WorldHitRate01 => totalShotsFired > 0 ? totalWorldHits / (float)totalShotsFired : 0f;
     public float CriticalRate01 => totalRegisteredHits > 0 ? totalCriticalHits / (float)totalRegisteredHits : 0f;
@@ -134,6 +141,7 @@ public class PlayerWeaponController : MonoBehaviour
     private void Update()
     {
         RecoverSpread(Time.deltaTime);
+        UpdateRecoilRecovery();
         TrimRecentMetrics();
         UpdateReload();
         UpdateMuzzleBlockedPreview();
@@ -233,6 +241,11 @@ public class PlayerWeaponController : MonoBehaviour
         totalShotsFired++;
         TrackRecentShot();
         nextFireTime = Time.time + activeWeapon.SecondsPerShot();
+        if (Time.time - lastFireTime > activeWeapon.recoilResetDelay)
+        {
+            recoilBurstShotIndex = 0;
+        }
+
         lastFireTime = Time.time;
         spreadAddDegrees = Mathf.Min(activeWeapon.maxSpreadAddDegrees, spreadAddDegrees + activeWeapon.spreadPerShot + activeWeapon.recoilSpreadAddDegrees);
         animationController?.TriggerPrimaryAttack();
@@ -389,8 +402,23 @@ public class PlayerWeaponController : MonoBehaviour
             return;
         }
 
-        float yawKick = Random.Range(-activeWeapon.cameraRecoilYaw, activeWeapon.cameraRecoilYaw);
-        cameraController.AddRecoil(activeWeapon.cameraRecoilPitch, yawKick);
+        int shotInBurst = recoilBurstShotIndex;
+        float pitchKick = Mathf.Min(
+            activeWeapon.maxRecoilPitchPerShot,
+            activeWeapon.cameraRecoilPitch + shotInBurst * activeWeapon.recoilPitchRampPerShot);
+        float patternYaw = Mathf.Min(
+            activeWeapon.maxRecoilYawPattern,
+            activeWeapon.cameraRecoilYaw + shotInBurst * activeWeapon.recoilYawPatternStep);
+        float yawKick = ResolveRecoilYawSign(shotInBurst) * patternYaw;
+        if (activeWeapon.recoilYawRandomness > 0f)
+        {
+            yawKick += Random.Range(-activeWeapon.recoilYawRandomness, activeWeapon.recoilYawRandomness);
+        }
+
+        lastRecoilPitchKick = pitchKick;
+        lastRecoilYawKick = yawKick;
+        recoilBurstShotIndex++;
+        cameraController.AddRecoil(pitchKick, yawKick);
     }
 
     private void ResolveHit(WeaponDefinition activeWeapon, Ray shotRay, bool didHit, RaycastHit shotHit)
@@ -415,7 +443,7 @@ public class PlayerWeaponController : MonoBehaviour
             debugLastHitName = shotHit.collider != null ? shotHit.collider.name : string.Empty;
             lastHitDistance = shotHit.distance;
 
-            bool critical = shotHit.collider != null && shotHit.collider.name.ToLowerInvariant().Contains("head");
+            bool critical = IsCriticalHit(shotHit.collider);
             float damage = activeWeapon.EvaluateDamage(shotHit.distance, critical);
             IDamageable damageable = FindDamageable(shotHit.collider);
             bool registered = damageable != null;
@@ -461,6 +489,20 @@ public class PlayerWeaponController : MonoBehaviour
     {
         recentShotTimes.Enqueue(Time.time);
         TrimRecentMetrics();
+    }
+
+    private void UpdateRecoilRecovery()
+    {
+        if (recoilBurstShotIndex > 0 && Time.time - lastFireTime > ActiveWeapon.recoilResetDelay)
+        {
+            recoilBurstShotIndex = 0;
+        }
+    }
+
+    private static float ResolveRecoilYawSign(int shotIndex)
+    {
+        int patternIndex = Mathf.Abs(shotIndex) % 6;
+        return patternIndex < 2 || patternIndex == 4 ? 1f : -1f;
     }
 
     private void TrackRecentRegisteredHit()
@@ -547,6 +589,21 @@ public class PlayerWeaponController : MonoBehaviour
         }
 
         return null;
+    }
+
+    private static bool IsCriticalHit(Collider hitCollider)
+    {
+        if (hitCollider == null)
+        {
+            return false;
+        }
+
+        if (hitCollider.GetComponentInParent<CriticalHitbox>() != null)
+        {
+            return true;
+        }
+
+        return hitCollider.name.ToLowerInvariant().Contains("head");
     }
 
     private void UpdateDebugState()

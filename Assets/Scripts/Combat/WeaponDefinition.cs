@@ -52,6 +52,12 @@ public class WeaponDefinition : ScriptableObject
     public float cameraRecoilPitch = 0.42f;
     public float cameraRecoilYaw = 0.18f;
     public float recoilSpreadAddDegrees = 0.12f;
+    public float recoilResetDelay = 0.25f;
+    public float recoilPitchRampPerShot = 0.035f;
+    public float maxRecoilPitchPerShot = 0.68f;
+    public float recoilYawPatternStep = 0.045f;
+    public float maxRecoilYawPattern = 0.28f;
+    public float recoilYawRandomness = 0.04f;
 
     [Header("Movement Multipliers")]
     public float aimMovementMultiplier = 0.75f;

@@ -58,6 +58,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private bool debugIsSlowWalking;
     [SerializeField] private float debugCurrentSpeed;
     [SerializeField] private float debugDesiredSpeed;
+    [SerializeField] private float debugCurrentAcceleration;
     [SerializeField] private float debugCoyoteTimer;
     [SerializeField] private float debugJumpBufferTimer;
     [SerializeField] private float debugSlideBufferTimer;
@@ -102,6 +103,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private float slideTimer;
     private float currentSpeed;
     private float desiredSpeed;
+    private float currentAcceleration;
     private float coyoteTimer;
     private float jumpBufferTimer;
     private float slideBufferTimer;
@@ -310,6 +312,7 @@ public class ThirdPersonMotor : MonoBehaviour
 
         Vector3 targetVelocity = BuildTargetHorizontalVelocity();
         float acceleration = ResolveHorizontalAcceleration(targetVelocity);
+        currentAcceleration = acceleration;
 
         if (!isGrounded && targetVelocity.sqrMagnitude > 0.001f)
         {
@@ -415,6 +418,7 @@ public class ThirdPersonMotor : MonoBehaviour
 
         currentSpeed = slideSpeed;
         desiredSpeed = slideSpeed;
+        currentAcceleration = (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f);
         horizontalVelocity = slideDirection * slideSpeed;
         moveDirection = slideDirection;
         controller.Move(horizontalVelocity * deltaTime);
@@ -639,6 +643,7 @@ public class ThirdPersonMotor : MonoBehaviour
         debugIsSlowWalking = isSlowWalking;
         debugCurrentSpeed = currentSpeed;
         debugDesiredSpeed = desiredSpeed;
+        debugCurrentAcceleration = currentAcceleration;
         debugCoyoteTimer = coyoteTimer;
         debugJumpBufferTimer = jumpBufferTimer;
         debugSlideBufferTimer = slideBufferTimer;
@@ -675,10 +680,19 @@ public class ThirdPersonMotor : MonoBehaviour
     public bool IsFalling() => !isGrounded && verticalVelocity.y < -0.1f;
     public float GetCurrentSpeed() => currentSpeed;
     public float GetDesiredSpeed() => desiredSpeed;
+    public float GetCurrentAcceleration() => currentAcceleration;
     public string GetMovementMode() => currentMovementMode;
     public Vector3 GetHorizontalVelocity() => horizontalVelocity;
     public Vector3 GetMoveDirection() => moveDirection;
     public Vector3 GetVerticalVelocity() => verticalVelocity;
+    public float GetCoyoteTimeRemaining() => coyoteTimer;
+    public float GetJumpBufferTimeRemaining() => jumpBufferTimer;
+    public float GetSlideBufferTimeRemaining() => slideBufferTimer;
+    public float GetGroundedStableTime() => groundedStableTimer;
+    public bool IsJumpLockedUntilGrounded() => jumpLockedUntilGrounded;
+    public bool HasLeftGroundSinceJump() => hasLeftGroundSinceJump;
+    public float GetSlideSpeed() => slideSpeed;
+    public string GetStandBlocker() => debugStandBlocker;
 
     private void OnDrawGizmosSelected()
     {

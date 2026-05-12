@@ -82,6 +82,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     public bool HasAimHit => hasAimHit;
     public bool IsMuzzleBlocked => muzzleBlocked;
     public Camera ControlledCamera => controlledCamera;
+    public float CurrentRecoilPitch => recoilPitch;
+    public float CurrentRecoilYaw => recoilYaw;
 
     private void Start()
     {

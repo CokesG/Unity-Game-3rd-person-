@@ -1,6 +1,6 @@
 # Movement Feel Spec
 
-Last updated: 2026-05-09
+Last updated: 2026-05-12
 
 ## Goal
 
@@ -21,7 +21,7 @@ The `Player` root remains controller-driven through `ThirdPersonMotor`. Root mot
 - Slide input buffering.
 - Slide steering.
 - Low-ceiling stand checks.
-- Debug readouts for movement state, speed, buffers, and blocked stand attempts.
+- Debug readouts for movement state, speed, desired speed, acceleration, vertical velocity, buffers, grounded-stable time, jump lock, slide speed, and blocked stand attempts.
 
 ## Starting Tuning Values
 
@@ -30,9 +30,9 @@ Walk speed: 2.5
 Run speed: 5.5
 Sprint speed: 7.25
 Aim speed: 3.0
-Crouch speed: 2.0
-Normal acceleration: 34
-Sprint acceleration: 42
+Crouch speed: 2.4
+Normal acceleration: 22
+Sprint acceleration: 34
 Aim acceleration: 28
 Ground deceleration: 46
 Air acceleration: 10
@@ -42,10 +42,13 @@ Normal rotation speed: 15
 Aim rotation speed: 24
 Sprint rotation speed: 12
 Slide rotation speed: 10
-Jump height: 1.5
-Gravity: -9.81
+Jump height: 0.5625
+Gravity: -22
+Fall gravity multiplier: 1.5
+Max fall speed: -30
 Coyote time: 0.10s
 Jump buffer: 0.12s
+Minimum jump interval: 0.25s
 Post-jump ground lock: 0.18s
 Grounded jump reset: 0.08s
 Slide input buffer: 0.10s
@@ -71,6 +74,8 @@ Slide steer strength: 5
 - Jump from crouch only happens when there is room to stand.
 - Aim movement faces camera forward and allows strafe.
 - Camera target lowers smoothly while crouching/sliding.
+- Hold `Left Alt` or `Right Alt` to slow-walk without blocking the Ctrl/C slide input path.
+- Press `F1` in Play mode and verify movement mode, acceleration, coyote, jump buffer, slide buffer, lock state, and slide speed update live.
 
 ## Do Not Add Yet
 

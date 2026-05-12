@@ -1,6 +1,6 @@
 # Playtest Checklist
 
-Last updated: 2026-05-09
+Last updated: 2026-05-12
 
 ## Setup
 
@@ -22,6 +22,7 @@ Full test gym:
 - Walk/run blend does not snap.
 - Stop does not feel icy.
 - Sprint starts only while moving forward.
+- Alt slow-walk does not trigger crouch or block slide.
 - Aim cancels sprint.
 - Crouch toggles on C/Ctrl when grounded.
 - Sprint plus crouch starts slide.
@@ -62,7 +63,11 @@ Full test gym:
 - World hits increments on geometry hits, including blocked muzzle shots into cover.
 - Misses increment only when the hitscan ray hits nothing.
 - Critical hits increment when shooting a collider named `Head_Critical`.
+- Critical hits increment when shooting a collider marked with `CriticalHitbox`.
+- NoDmg increments when shooting world geometry that does not contain an `IDamageable`.
 - Total damage matches the sum of registered target damage.
+- Movement readout shows live mode, current/desired speed, acceleration, vertical speed, coyote, jump buffer, slide buffer, grounded-stable timer, jump lock, and slide speed.
+- Recoil readout shows burst index, last pitch/yaw kick, and camera recoil values during automatic fire.
 - Focus target shows current HP, current-life damage, session damage, hit count, crit count, defeats, and last damage.
 - Observed RPM is close to tuned RPM during sustained automatic fire.
 - Recent DPS changes while actively landing hits and decays after stopping.

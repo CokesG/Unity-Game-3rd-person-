@@ -87,3 +87,16 @@ Implemented:
 Follow-up:
 
 - Repeat Play mode tests in `TPS_TestGym` with `F1` overlay visible and confirm critical hits, stacked damage, reload countdown, observed RPM, and recent DPS all move as expected.
+
+## 2026-05-12 - Movement and Combat Debug Hooks
+
+Implemented:
+
+- Moved slow-walk fallback from Ctrl to Alt so crouch/slide input is no longer competing with slow-walk.
+- Added `CriticalHitbox` as the explicit critical-hit marker while keeping `Head_Critical` as a fallback.
+- Added rifle recoil burst tracking with pitch ramp, learnable yaw pattern, reset delay, and small yaw randomness.
+- Added live F1 movement telemetry: mode, current/desired speed, acceleration, vertical speed, coyote timer, jump buffer, slide buffer, grounded-stable time, jump lock, slide speed, and stand blocker.
+- Added live F1 recoil telemetry: burst index, last pitch/yaw kick, camera recoil pitch/yaw, and recoil reset delay.
+- Added `NoDmg` world-hit reporting to separate geometry/collider hits from damage-registered hits.
+
+Use this pass to tune from evidence: if the rifle feels unfair, check recoil burst and spread first; if slide/jump feels inconsistent, check movement buffers and jump lock before changing values.

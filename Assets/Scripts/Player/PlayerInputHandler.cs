@@ -18,7 +18,7 @@ public class PlayerInputHandler : MonoBehaviour
     [SerializeField] private string shoulderSwapActionName = "ShoulderSwap";
     [SerializeField] private string crouchActionName = "Crouch";
     [SerializeField] private string crouchFallbackActionName = "Slide";
-    [SerializeField] private bool slowWalkFallbackToCtrl = true;
+    [SerializeField] private bool slowWalkFallbackToAlt = true;
 
     private InputAction moveAction;
     private InputAction lookAction;
@@ -93,9 +93,9 @@ public class PlayerInputHandler : MonoBehaviour
         if (jumpAction != null) JumpTriggered = jumpAction.triggered;
         if (sprintAction != null) SprintPressed = sprintAction.IsPressed();
         SlowWalkPressed = slowWalkAction != null && slowWalkAction.IsPressed();
-        if (!SlowWalkPressed && slowWalkFallbackToCtrl && Keyboard.current != null)
+        if (!SlowWalkPressed && slowWalkFallbackToAlt && Keyboard.current != null)
         {
-            SlowWalkPressed = Keyboard.current.leftCtrlKey.isPressed || Keyboard.current.rightCtrlKey.isPressed;
+            SlowWalkPressed = Keyboard.current.leftAltKey.isPressed || Keyboard.current.rightAltKey.isPressed;
         }
 
         if (aimAction != null) AimPressed = aimAction.IsPressed();

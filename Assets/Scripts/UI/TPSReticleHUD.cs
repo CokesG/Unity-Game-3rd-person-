@@ -25,7 +25,7 @@ public class TPSReticleHUD : MonoBehaviour
     private bool criticalHit;
     private float nextTargetRefreshTime;
     private TargetDummy[] targetDummies = new TargetDummy[0];
-    private readonly StringBuilder debugBuilder = new StringBuilder(2048);
+    private readonly StringBuilder debugBuilder = new StringBuilder(4096);
 
     private void Awake()
     {
@@ -167,10 +167,10 @@ public class TPSReticleHUD : MonoBehaviour
         Color oldColor = GUI.color;
         Color oldContentColor = GUI.contentColor;
         GUI.color = new Color(0f, 0f, 0f, 0.68f);
-        GUI.Box(new Rect(20f, 52f, 560f, 360f), GUIContent.none);
+        GUI.Box(new Rect(20f, 52f, 620f, 460f), GUIContent.none);
         GUI.color = oldColor;
         GUI.contentColor = Color.white;
-        GUI.Label(new Rect(32f, 62f, 540f, 340f), debugBuilder.ToString());
+        GUI.Label(new Rect(32f, 62f, 596f, 440f), debugBuilder.ToString());
         GUI.contentColor = oldContentColor;
     }
 
@@ -197,10 +197,14 @@ public class TPSReticleHUD : MonoBehaviour
             .Append(" | Muzzle: ").Append(weaponController.MuzzleBlocked ? "BLOCKED" : "clear")
             .AppendLine();
 
+        AppendMovementMetrics();
+        AppendRecoilMetrics(weapon);
+
         debugBuilder.Append("Shots: ").Append(weaponController.TotalShotsFired)
             .Append(" | Registered: ").Append(weaponController.TotalRegisteredHits)
             .Append(" | Crits: ").Append(weaponController.TotalCriticalHits)
             .Append(" | World: ").Append(weaponController.TotalWorldHits)
+            .Append(" | NoDmg: ").Append(weaponController.TotalNonDamageWorldHits)
             .Append(" | Miss: ").Append(weaponController.TotalMisses)
             .Append(" | Blocked: ").Append(weaponController.TotalBlockedShots)
             .AppendLine();
@@ -255,6 +259,53 @@ public class TPSReticleHUD : MonoBehaviour
         {
             AppendTargetTable();
         }
+    }
+
+    private void AppendMovementMetrics()
+    {
+        if (motor == null)
+        {
+            return;
+        }
+
+        debugBuilder.Append("Move: ").Append(motor.GetMovementMode())
+            .Append(" | Speed ").Append(motor.GetCurrentSpeed().ToString("0.00"))
+            .Append('/').Append(motor.GetDesiredSpeed().ToString("0.00"))
+            .Append(" | Accel ").Append(motor.GetCurrentAcceleration().ToString("0.0"))
+            .Append(" | Y ").Append(motor.GetVerticalVelocity().y.ToString("0.00"))
+            .Append(" | Ground ").Append(motor.IsGrounded() ? "yes" : "no")
+            .AppendLine();
+
+        debugBuilder.Append("Move timers: coyote ").Append(motor.GetCoyoteTimeRemaining().ToString("0.00"))
+            .Append(" | jumpBuf ").Append(motor.GetJumpBufferTimeRemaining().ToString("0.00"))
+            .Append(" | slideBuf ").Append(motor.GetSlideBufferTimeRemaining().ToString("0.00"))
+            .Append(" | stable ").Append(motor.GetGroundedStableTime().ToString("0.00"))
+            .Append(" | lock ").Append(motor.IsJumpLockedUntilGrounded() ? "yes" : "no")
+            .Append(" | slideSpd ").Append(motor.GetSlideSpeed().ToString("0.00"));
+
+        string standBlocker = motor.GetStandBlocker();
+        if (!string.IsNullOrEmpty(standBlocker))
+        {
+            debugBuilder.Append(" | stand blocked ").Append(standBlocker);
+        }
+
+        debugBuilder.AppendLine();
+    }
+
+    private void AppendRecoilMetrics(WeaponDefinition weapon)
+    {
+        debugBuilder.Append("Recoil: burst ").Append(weaponController.RecoilBurstShotIndex)
+            .Append(" | kick P/Y ").Append(weaponController.LastRecoilPitchKick.ToString("0.00"))
+            .Append('/').Append(weaponController.LastRecoilYawKick.ToString("0.00"));
+
+        if (cameraController != null)
+        {
+            debugBuilder.Append(" | cam P/Y ").Append(cameraController.CurrentRecoilPitch.ToString("0.00"))
+                .Append('/').Append(cameraController.CurrentRecoilYaw.ToString("0.00"));
+        }
+
+        debugBuilder.Append(" | reset ").Append(weapon.recoilResetDelay.ToString("0.00")).Append('s')
+            .AppendLine();
     }
 
     private void AppendTargetTable()
