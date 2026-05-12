@@ -1,21 +1,25 @@
 # Animation Promotion Workflow
 
-Last updated: 2026-05-11
+Last updated: 2026-05-12
 
 This project promotes hero animation one clip at a time. The Player root, `CharacterController`, camera, jump physics, collision, and inputs stay code-driven. Animation clips only pose the visual child.
 
 ## Current Live Contract
 
 - Normal WASD uses `Run`.
-- `Left Ctrl` or `Right Ctrl` is slow walk and uses `Walk`.
+- `Left Alt` or `Right Alt` is slow walk and uses `Walk`.
 - Shift requests sprint speed, but sprint still uses the `Run` visual until a sprint clip is promoted.
 - Crouch gameplay is enabled.
 - Crouch transitions and a stable held crouch pose are promoted:
   - `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
   - `Crouch Idle`: held final frame of `User_Stand_To_Crouch`, state speed `0`
-  - `Crouch Walk`: `Crouch Walk Directional` Cartesian 2D blend tree from `Assets/Animations/NightfallVanguard/UserCrouchWalk/`, driven by `MovementX` and `MovementY`. The tree includes a center held-crouch pose so smoothed input can blend into directional movement instead of going visually dead near zero.
   - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
-- The current crouch test promotes transition down, held crouch idle, directional crouch walk, and transition up. Crouch movement intentionally interrupts the crouch-down transition once speed is nonzero so the player does not slide around in a static crouch pose. `forceCrouchWalkWhenMoving` is true to bypass stale open-scene serialized values while we are actively tuning this. If crouch movement regresses, first turn off `forceCrouchWalkWhenMoving`, then `crouchWalkClipPromoted`, and confirm the held crouch pose still works.
+- `Crouch Walk` is quarantined for live play. The current directional crouch-walk clips make the character stand or float while the gameplay state is crouched, so `crouchWalkClipPromoted` and `forceCrouchWalkWhenMoving` must stay off in `SampleScene`.
+- While crouched and moving, the live character should hold the reviewed crouch pose until a proper crouch-walk set is authored and passes sandbox review.
+- First-pass procedural crouch-walk candidates are generated under `Assets/Animations/NightfallVanguard/UserCrouchWalkProcedural/` from the accepted `User_StandToCrouch_Crouching` final pose.
+- Grounded full-quality Nightfall procedural crouch-walk candidates are generated under `Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk/` by `Tools/Blender/create_nightfall_crouch_walk_procedural.py`. The generator solves mesh-to-ground per keyframe so the Blender preview does not hover above the grid.
+- `Assets/Animations/NightfallVanguard/Nightfall_GLB_Linked.controller` has its sandbox-only `Crouch Walk` state wired to `Nightfall_FullQuality_CrouchWalk_Forward_Procedural` for review. This is not a live promotion.
+- Reimport candidate FBXs with `Tools/TPS/Nightfall/Reimport Procedural Crouch Walk Candidates` after regenerating them in Blender.
 - `PlayerAnimationController` grounds the visual child while grounded by comparing foot/toe bones to the `CharacterController` capsule foot. Renderer bounds are only a fallback. This corrects vertical/root offset from clips without moving the gameplay root.
 - Animation Rigging is now part of the project. Use `Tools/TPS/Nightfall/Setup Animation Rigging Helpers` after Package Manager resolves `com.unity.animation.rigging`.
 - `PlayerAnimationController.allowCrouchAnimationClips` is on for the currently reviewed crouch set. If a crouch clip regresses, turn off only that individual promoted flag instead of disabling the whole movement system.
@@ -141,7 +145,7 @@ The linked sandbox is intentionally conservative right now:
 - `4 Jump Start` and `Running Jump` use `Nightfall_FullQuality_JumpSafe_Baked`.
 - `7 Stand -> Crouch` and `0 Crouch -> Stand` are now live-promoted after sandbox review.
 - `8 Crouched Idle` remains sandbox-only. Live crouch idle currently holds the first frame of `Mixamo_Crouched_To_Standing` because the dedicated crouch idle clip leaned the character.
-- `9 Crouched Walk` is sandbox/reference only. The current source has a rifle posture and should not drive the live unarmed character.
+- `9 Crouched Walk` previews the grounded full-quality procedural forward candidate. Review it from front and side for foot contact, pelvis height, arm pose, and leg crossing before building the full directional set.
 - Unknown, attack, and ability preview states fall back to idle/walk until each clip is promoted safely.
 
 Do not promote the remaining crouch states into `SampleScene` just because the buttons move. The sandbox is where we decide whether the clip quality is acceptable; live crouch gameplay should keep the stable held crouch idle even while trialing crouch-walk.

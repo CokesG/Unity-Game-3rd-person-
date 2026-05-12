@@ -30,7 +30,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool standToCrouchClipPromoted;
     [SerializeField] private bool standUpClipPromoted;
     [SerializeField] private bool allowCrouchAnimationClips;
-    [SerializeField] private bool forceCrouchWalkWhenMoving = true;
+    [SerializeField] private bool forceCrouchWalkWhenMoving;
     [SerializeField] private float landingStateDuration = 0.22f;
     [SerializeField] private float standToCrouchStateDuration = 0.6f;
     [SerializeField] private float standUpStateDuration = 0.6f;
