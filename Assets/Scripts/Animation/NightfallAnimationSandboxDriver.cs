@@ -20,8 +20,8 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private Transform previewTarget;
     [SerializeField] private float crossFadeTime = 0.12f;
     [SerializeField] private Vector3 previewTargetOffset = new Vector3(0f, 1.05f, 0f);
-    [SerializeField] private Vector3 previewCameraOffset = new Vector3(0f, 1.35f, -4.25f);
-    [SerializeField] private float previewCameraFieldOfView = 35f;
+    [SerializeField] private Vector3 previewCameraOffset = new Vector3(0f, 1.45f, -5.75f);
+    [SerializeField] private float previewCameraFieldOfView = 42f;
     [SerializeField] private bool snapPreviewToGround = true;
     [SerializeField] private float previewGroundY = 0.02f;
     [SerializeField] private bool showHud = true;
@@ -457,8 +457,8 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         if (TryGetPreviewBounds(out Bounds bounds))
         {
             lookTarget = bounds.center + new Vector3(0f, bounds.size.y * 0.08f, 0f);
-            float distance = Mathf.Max(4f, bounds.size.y * 2.2f);
-            cameraPosition = lookTarget + new Vector3(0f, bounds.size.y * 0.18f, -distance);
+            float distance = Mathf.Max(5.5f, bounds.size.y * 3.0f);
+            cameraPosition = lookTarget + new Vector3(0f, bounds.size.y * 0.22f, -distance);
         }
         else
         {

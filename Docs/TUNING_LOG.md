@@ -115,3 +115,17 @@ Validation:
 - Blender MCP export bounds: all regenerated full-quality candidates sample at `min_z = 0.015` across key poses.
 - Unity recompiled successfully after the sandbox driver change.
 - Unity logged `Configured 8 procedural crouch-walk candidate importers.` after running the reimport utility.
+
+## 2026-05-12 - Crouch-Walk Crossed Feet Fix
+
+Implemented:
+
+- Replaced the over-ambitious procedural crouch-walk leg cycle with a safer wide crouch shuffle.
+- Reduced knee bend, widened the stance, and cut the step swing down so the feet do not scissor across each other during sandbox review.
+- Regenerated the full-quality forward/back/left/right procedural FBXs.
+
+Validation:
+
+- Blender MCP preview shows clear left/right foot separation from the front.
+- Forward candidate sampled at `min_z = 0.015` and roughly `0.394m` left/right foot gap.
+- This remains sandbox-only; do not promote live crouch-walk until an authored or motion-captured crouch-walk set replaces the procedural placeholder.

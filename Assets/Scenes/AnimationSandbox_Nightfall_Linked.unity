@@ -340,8 +340,8 @@ MonoBehaviour:
   previewTarget: {fileID: 1227788881}
   crossFadeTime: 0.12
   previewTargetOffset: {x: 0, y: 1.05, z: 0}
-  previewCameraOffset: {x: 0, y: 1.35, z: -4.25}
-  previewCameraFieldOfView: 35
+  previewCameraOffset: {x: 0, y: 1.45, z: -5.75}
+  previewCameraFieldOfView: 42
   showHud: 0
   currentStateIndex: 0
 --- !u!1001 &1227788877
@@ -451,8 +451,8 @@ MonoBehaviour:
   previewTarget: {fileID: 1227788881}
   crossFadeTime: 0.12
   previewTargetOffset: {x: 0, y: 1.05, z: 0}
-  previewCameraOffset: {x: 0, y: 1.35, z: -4.25}
-  previewCameraFieldOfView: 35
+  previewCameraOffset: {x: 0, y: 1.45, z: -5.75}
+  previewCameraFieldOfView: 42
   showHud: 1
   currentStateIndex: 0
 --- !u!4 &1227788881 stripped

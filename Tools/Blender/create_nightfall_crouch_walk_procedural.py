@@ -166,17 +166,17 @@ def action_fcurves(action):
 
 
 def apply_base_crouch(armature, bob=0.0, sway=0.0):
-    add_location(armature, "Hips", (sway, -17.5 + bob, -8.0))
-    add_rotation(armature, "Hips", (-21.0, 0.0, 0.0))
-    add_rotation(armature, "Spine", (13.0, 0.0, 0.0))
-    add_rotation(armature, "Spine01", (15.0, 0.0, 0.0))
-    add_rotation(armature, "Spine02", (8.0, 0.0, 0.0))
-    add_rotation(armature, "LeftUpLeg", (84.0, 0.0, -7.0))
-    add_rotation(armature, "RightUpLeg", (84.0, 0.0, 7.0))
-    add_rotation(armature, "LeftLeg", (-128.0, 0.0, 0.0))
-    add_rotation(armature, "RightLeg", (-128.0, 0.0, 0.0))
-    add_rotation(armature, "LeftFoot", (50.0, 0.0, 0.0))
-    add_rotation(armature, "RightFoot", (50.0, 0.0, 0.0))
+    add_location(armature, "Hips", (sway, -18.0 + bob, -8.0))
+    add_rotation(armature, "Hips", (-19.0, 0.0, 0.0))
+    add_rotation(armature, "Spine", (11.0, 0.0, 0.0))
+    add_rotation(armature, "Spine01", (13.0, 0.0, 0.0))
+    add_rotation(armature, "Spine02", (7.0, 0.0, 0.0))
+    add_rotation(armature, "LeftUpLeg", (70.0, 0.0, -13.0))
+    add_rotation(armature, "RightUpLeg", (70.0, 0.0, 13.0))
+    add_rotation(armature, "LeftLeg", (-102.0, 0.0, 0.0))
+    add_rotation(armature, "RightLeg", (-102.0, 0.0, 0.0))
+    add_rotation(armature, "LeftFoot", (38.0, 0.0, 0.0))
+    add_rotation(armature, "RightFoot", (38.0, 0.0, 0.0))
 
     # Start the arms from a compact, lowered pose; IK below keeps the hands in a
     # two-hand weapon-ready pocket during the bake.
@@ -188,23 +188,23 @@ def apply_base_crouch(armature, bob=0.0, sway=0.0):
 
 def apply_forward_back_step(armature, sign, reverse=False):
     stride = -sign if reverse else sign
-    add_rotation(armature, "LeftUpLeg", (6.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "RightUpLeg", (-6.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "LeftLeg", (-4.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "RightLeg", (4.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "LeftFoot", (2.5 * stride, 0.0, 0.0))
-    add_rotation(armature, "RightFoot", (-2.5 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftUpLeg", (2.0 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightUpLeg", (-2.0 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftLeg", (-1.0 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightLeg", (1.0 * stride, 0.0, 0.0))
+    add_rotation(armature, "LeftFoot", (0.75 * stride, 0.0, 0.0))
+    add_rotation(armature, "RightFoot", (-0.75 * stride, 0.0, 0.0))
 
 
 def apply_strafe_step(armature, sign, right=False):
     side = sign if right else -sign
-    add_rotation(armature, "Hips", (0.0, 0.0, -2.0 if right else 2.0))
-    add_rotation(armature, "LeftUpLeg", (2.0, 0.0, -5.0 * side))
-    add_rotation(armature, "RightUpLeg", (2.0, 0.0, -5.0 * side))
-    add_rotation(armature, "LeftLeg", (-3.0, 0.0, 1.0 * side))
-    add_rotation(armature, "RightLeg", (-3.0, 0.0, 1.0 * side))
-    add_rotation(armature, "LeftFoot", (1.0, 0.0, -1.5 * side))
-    add_rotation(armature, "RightFoot", (1.0, 0.0, -1.5 * side))
+    add_rotation(armature, "Hips", (0.0, 0.0, -1.0 if right else 1.0))
+    add_rotation(armature, "LeftUpLeg", (0.75, 0.0, -1.5 * side))
+    add_rotation(armature, "RightUpLeg", (0.75, 0.0, -1.5 * side))
+    add_rotation(armature, "LeftLeg", (-1.0, 0.0, 0.25 * side))
+    add_rotation(armature, "RightLeg", (-1.0, 0.0, 0.25 * side))
+    add_rotation(armature, "LeftFoot", (0.5, 0.0, -0.5 * side))
+    add_rotation(armature, "RightFoot", (0.5, 0.0, -0.5 * side))
 
 
 def place_hand_targets(ik_targets, mesh_objects, frame, sign):
@@ -252,11 +252,11 @@ def create_action(armature, mesh_objects, base_pose, direction):
     ik_targets = setup_hand_ik(armature)
 
     phases = [
-        (1, 1.0, 0.0, -0.045),
-        (9, 0.0, 0.10, 0.0),
-        (17, -1.0, 0.0, 0.045),
-        (25, 0.0, 0.10, 0.0),
-        (33, 1.0, 0.0, -0.045),
+        (1, 1.0, 0.0, -0.018),
+        (9, 0.0, 0.045, 0.0),
+        (17, -1.0, 0.0, 0.018),
+        (25, 0.0, 0.045, 0.0),
+        (33, 1.0, 0.0, -0.018),
     ]
 
     for frame, sign, bob, sway in phases:
