@@ -18,10 +18,11 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float movementDampTime = 0.1f;
     [SerializeField] private float crouchMovementDampTime = 0.16f;
     [SerializeField] private float locomotionCrossFadeTime = 0.18f;
-    [SerializeField] private float crouchWalkCrossFadeTime = 0.24f;
+    [SerializeField] private float crouchWalkCrossFadeTime = 0.3f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
     [SerializeField] private float crouchWalkEnterSpeed = 0.12f;
     [SerializeField] private float crouchWalkExitSpeed = 0.04f;
+    [SerializeField] private float crouchTransitionCrossFadeTime = 0.16f;
     [SerializeField] private bool driveAnimatorStateMachine;
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
@@ -324,7 +325,9 @@ public class PlayerAnimationController : MonoBehaviour
             || targetState == StandToCrouchState
             || targetState == StandUpState;
         float fadeTime = isFastOneShot
-            ? jumpCrossFadeTime
+            ? targetState == StandToCrouchState || targetState == StandUpState
+                ? crouchTransitionCrossFadeTime
+                : jumpCrossFadeTime
             : targetState == CrouchWalkState || currentAnimatorStatePath == CrouchWalkState
                 ? crouchWalkCrossFadeTime
                 : locomotionCrossFadeTime;

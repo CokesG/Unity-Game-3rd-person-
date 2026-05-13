@@ -30,7 +30,8 @@ Mixamo import rule:
 - Keep root motion off for now. The CharacterController still owns real movement, jump height, collision, and landing.
 - Crouch-walk FBXs must preserve their original root Y pose. For those clips, keep `Root Transform Position (Y)` based on Original / not feet-normalized. If Unity normalizes them from feet, the live rig can stand upright while the state says `Crouch Move`.
 - Current live crouch movement tuning: gameplay crouch speed is `2.4`, `crouchWalkClipPromoted` is on, and `forceCrouchWalkWhenMoving` remains off in `SampleScene`. Moving crouched should use the authored directional crouch-walk set through `Crouch Walk Directional`.
-- Current crouch blend tuning: `crouchMovementDampTime` is `0.16`, `crouchWalkCrossFadeTime` is `0.24`, `crouchWalkEnterSpeed` is `0.12`, and `crouchWalkExitSpeed` is `0.04`. The separate enter/exit thresholds prevent flicker around zero speed.
+- Current crouch blend tuning: `crouchMovementDampTime` is `0.16`, `crouchWalkCrossFadeTime` is `0.30`, `crouchTransitionCrossFadeTime` is `0.16`, `crouchWalkEnterSpeed` is `0.12`, and `crouchWalkExitSpeed` is `0.04`. The separate enter/exit thresholds prevent flicker around zero speed.
+- Current slide-to-crouch stability tuning: `slideGroundStickForce` is `8` and `slideExitSpeedCarry` is `1.1`.
 - F1 animation telemetry shows the current movement state, `MovementX` / `MovementY`, whether crouch-walk is active, current Animator state path, crouch transition timer, and visual grounding offset.
 - Live aim-strafe promotion is blocked until `PlayerHumanoid.controller` gets an approved aim-strafe state or directional aim blend tree. Until then, aim movement should continue to use the safe walk fallback.
 

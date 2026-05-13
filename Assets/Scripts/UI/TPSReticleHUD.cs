@@ -289,7 +289,8 @@ public class TPSReticleHUD : MonoBehaviour
             .Append(" | slideBuf ").Append(motor.GetSlideBufferTimeRemaining().ToString("0.00"))
             .Append(" | stable ").Append(motor.GetGroundedStableTime().ToString("0.00"))
             .Append(" | lock ").Append(motor.IsJumpLockedUntilGrounded() ? "yes" : "no")
-            .Append(" | slideSpd ").Append(motor.GetSlideSpeed().ToString("0.00"));
+            .Append(" | slideSpd ").Append(motor.GetSlideSpeed().ToString("0.00"))
+            .Append(" | leftGround ").Append(motor.HasLeftGroundSinceJump() ? "yes" : "no");
 
         string standBlocker = motor.GetStandBlocker();
         if (!string.IsNullOrEmpty(standBlocker))

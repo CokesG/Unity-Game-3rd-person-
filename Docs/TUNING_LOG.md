@@ -177,3 +177,12 @@ Implemented:
 - Added crouch weapon stability tuning: crouched non-slide firing applies `crouchSpreadMultiplier` and `crouchRecoilMultiplier`.
 - Added F1 weapon telemetry for stance spread and recoil multipliers so crouch accuracy/recoil tuning is visible during test-gym passes.
 - Kept aim-strafe live promotion blocked for now because `PlayerHumanoid.controller` does not yet contain a live aim-strafe state or directional aim blend tree.
+
+## 2026-05-12 - Slide Exit And Crouch Transition Stabilization
+
+Implemented:
+
+- Added slide ground-stick force so slide movement keeps the `CharacterController` biased down instead of popping upward during slide-to-crouch transitions.
+- Capped horizontal speed carry when a slide exits into crouch, reducing launch-like carryover if the slide ends while grounding is unstable.
+- Increased crouch idle/walk crossfade and separated crouch transition crossfade from jump/air timings for smoother crouch entry, crouch walk, and crouch exit.
+- Added F1 `leftGround` visibility beside slide speed to help diagnose slide/crouch launch bugs.

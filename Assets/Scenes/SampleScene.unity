@@ -1106,10 +1106,11 @@ MonoBehaviour:
   movementDampTime: 0.1
   crouchMovementDampTime: 0.16
   locomotionCrossFadeTime: 0.18
-  crouchWalkCrossFadeTime: 0.24
+  crouchWalkCrossFadeTime: 0.3
   jumpCrossFadeTime: 0.06
   crouchWalkEnterSpeed: 0.12
   crouchWalkExitSpeed: 0.04
+  crouchTransitionCrossFadeTime: 0.16
   driveAnimatorStateMachine: 1
   walkClipPromoted: 1
   runClipPromoted: 1
@@ -1203,6 +1204,8 @@ MonoBehaviour:
   slideDuration: 0.9
   slideSteerStrength: 5
   slideInputBufferTime: 0.1
+  slideGroundStickForce: 8
+  slideExitSpeedCarry: 1.1
   currentMovementMode: 
   debugIsCrouching: 0
   debugIsSliding: 0

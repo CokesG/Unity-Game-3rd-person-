@@ -50,6 +50,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideDuration = 0.9f;
     [SerializeField] private float slideSteerStrength = 5f;
     [SerializeField] private float slideInputBufferTime = 0.1f;
+    [SerializeField] private float slideGroundStickForce = 8f;
+    [SerializeField] private float slideExitSpeedCarry = 1.1f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementMode;
@@ -396,6 +398,10 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         isSprinting = false;
         wantsToCrouch = true;
+        if (verticalVelocity.y > -2f)
+        {
+            verticalVelocity.y = -2f;
+        }
 
         Vector3 steerInput = new Vector3(input.MoveInput.x, 0f, input.MoveInput.y);
         steerInput = Vector3.ClampMagnitude(steerInput, 1f);
@@ -422,6 +428,7 @@ public class ThirdPersonMotor : MonoBehaviour
         horizontalVelocity = slideDirection * slideSpeed;
         moveDirection = slideDirection;
         controller.Move(horizontalVelocity * deltaTime);
+        controller.Move(Vector3.down * (slideGroundStickForce * deltaTime));
 
         slideSpeed = Mathf.MoveTowards(slideSpeed, slideEndSpeed, (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f) * deltaTime);
     }
@@ -563,6 +570,16 @@ public class ThirdPersonMotor : MonoBehaviour
     {
         isSliding = false;
         slideTimer = 0f;
+        if (enterCrouch)
+        {
+            float carrySpeed = Mathf.Min(horizontalVelocity.magnitude, Mathf.Max(crouchSpeed * slideExitSpeedCarry, crouchSpeed));
+            horizontalVelocity = slideDirection.sqrMagnitude > 0.001f ? slideDirection.normalized * carrySpeed : Vector3.zero;
+            if (verticalVelocity.y > -2f)
+            {
+                verticalVelocity.y = -2f;
+            }
+        }
+
         slideSpeed = 0f;
         wantsToCrouch = enterCrouch;
     }
