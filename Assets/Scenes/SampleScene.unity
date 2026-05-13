@@ -1104,8 +1104,12 @@ MonoBehaviour:
   characterVisual: {fileID: 1186776457}
   speedDampTime: 0.14
   movementDampTime: 0.1
+  crouchMovementDampTime: 0.16
   locomotionCrossFadeTime: 0.18
+  crouchWalkCrossFadeTime: 0.24
   jumpCrossFadeTime: 0.06
+  crouchWalkEnterSpeed: 0.12
+  crouchWalkExitSpeed: 0.04
   driveAnimatorStateMachine: 1
   walkClipPromoted: 1
   runClipPromoted: 1

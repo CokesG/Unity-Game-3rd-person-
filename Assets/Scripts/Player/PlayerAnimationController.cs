@@ -16,8 +16,12 @@ public class PlayerAnimationController : MonoBehaviour
     [Header("Damping")]
     [SerializeField] private float speedDampTime = 0.14f;
     [SerializeField] private float movementDampTime = 0.1f;
+    [SerializeField] private float crouchMovementDampTime = 0.16f;
     [SerializeField] private float locomotionCrossFadeTime = 0.18f;
+    [SerializeField] private float crouchWalkCrossFadeTime = 0.24f;
     [SerializeField] private float jumpCrossFadeTime = 0.06f;
+    [SerializeField] private float crouchWalkEnterSpeed = 0.12f;
+    [SerializeField] private float crouchWalkExitSpeed = 0.04f;
     [SerializeField] private bool driveAnimatorStateMachine;
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
@@ -112,6 +116,7 @@ public class PlayerAnimationController : MonoBehaviour
     private float standToCrouchStateTimer;
     private float standUpStateTimer;
     private bool wasCrouchingLastFrame;
+    private bool wantsCrouchWalkVisual;
     private int currentAnimatorStateHash;
     private Vector3 visualBaseLocalPosition;
     private Renderer[] visualRenderers;
@@ -175,8 +180,6 @@ public class PlayerAnimationController : MonoBehaviour
 
         Vector3 localHorizontalVelocity = transform.InverseTransformDirection(motor.GetHorizontalVelocity());
         currentSpeed = new Vector2(localHorizontalVelocity.x, localHorizontalVelocity.z).magnitude;
-        currentMovementX = Mathf.Clamp(localHorizontalVelocity.x / Mathf.Max(motor.GetCurrentSpeed(), 0.01f), -1f, 1f);
-        currentMovementY = Mathf.Clamp(localHorizontalVelocity.z / Mathf.Max(motor.GetCurrentSpeed(), 0.01f), -1f, 1f);
         currentVerticalVelocity = motor.GetVerticalVelocity().y;
         currentIsGrounded = motor.IsGrounded();
         currentIsAiming = input.AimPressed;
@@ -186,9 +189,13 @@ public class PlayerAnimationController : MonoBehaviour
         currentIsFalling = motor.IsFalling();
         currentIsCrouching = motor.IsCrouching();
         currentIsSliding = motor.IsSliding();
+        Vector2 movementBlend = ResolveMovementBlend(localHorizontalVelocity);
+        currentMovementX = movementBlend.x;
+        currentMovementY = movementBlend.y;
         currentUsesRunVisual = ShouldUseRunState();
         UpdateLandingStateTimer();
         UpdateCrouchTransitionStateTimers();
+        UpdateCrouchWalkVisualState();
         currentLandingStateTime = landingStateTimer;
         currentCrouchTransitionStateTime = Mathf.Max(standToCrouchStateTimer, standUpStateTimer);
         currentMovementState = ResolveMovementState();
@@ -201,8 +208,9 @@ public class PlayerAnimationController : MonoBehaviour
         CacheAnimatorParameters();
 
         SetFloatIfAvailable(speedHash, currentSpeed, speedDampTime);
-        SetFloatIfAvailable(movementXHash, currentMovementX, movementDampTime);
-        SetFloatIfAvailable(movementYHash, currentMovementY, movementDampTime);
+        float directionalDampTime = currentIsCrouching && CanUseCrouchWalkClip() ? crouchMovementDampTime : movementDampTime;
+        SetFloatIfAvailable(movementXHash, currentMovementX, directionalDampTime);
+        SetFloatIfAvailable(movementYHash, currentMovementY, directionalDampTime);
         SetFloatIfAvailable(verticalVelocityHash, currentVerticalVelocity);
         
         bool driveAirborneParameters = airClipPromoted || landClipPromoted;
@@ -257,7 +265,7 @@ public class PlayerAnimationController : MonoBehaviour
         {
             targetState = AirState;
         }
-        else if (currentIsCrouching && currentSpeed > 0.1f && CanUseCrouchWalkClip())
+        else if (wantsCrouchWalkVisual)
         {
             targetState = CrouchWalkState;
         }
@@ -303,7 +311,12 @@ public class PlayerAnimationController : MonoBehaviour
             || targetState == LandingState
             || targetState == StandToCrouchState
             || targetState == StandUpState;
-        CrossFadeIfNeeded(targetState, isFastOneShot ? jumpCrossFadeTime : locomotionCrossFadeTime);
+        float fadeTime = isFastOneShot
+            ? jumpCrossFadeTime
+            : targetState == CrouchWalkState || currentAnimatorStatePath == CrouchWalkState
+                ? crouchWalkCrossFadeTime
+                : locomotionCrossFadeTime;
+        CrossFadeIfNeeded(targetState, fadeTime);
     }
 
     private void UpdateLandingStateTimer()
@@ -371,6 +384,44 @@ public class PlayerAnimationController : MonoBehaviour
             && (currentIsSlowWalking || currentIsAiming || (currentIsCrouching && !CanUseCrouchWalkClip() && !CanUseStandToCrouchClip()));
     }
 
+    private void UpdateCrouchWalkVisualState()
+    {
+        if (!currentIsCrouching || !CanUseCrouchWalkClip())
+        {
+            wantsCrouchWalkVisual = false;
+            return;
+        }
+
+        float inputMagnitude = input != null ? input.MoveInput.magnitude : 0f;
+        float enterSpeed = Mathf.Max(0.01f, crouchWalkEnterSpeed);
+        float exitSpeed = Mathf.Clamp(crouchWalkExitSpeed, 0f, enterSpeed);
+
+        if (wantsCrouchWalkVisual)
+        {
+            wantsCrouchWalkVisual = currentSpeed > exitSpeed || inputMagnitude > 0.05f;
+            return;
+        }
+
+        wantsCrouchWalkVisual = currentSpeed > enterSpeed || inputMagnitude > 0.1f;
+    }
+
+    private Vector2 ResolveMovementBlend(Vector3 localHorizontalVelocity)
+    {
+        if (currentIsCrouching && CanUseCrouchWalkClip() && input != null)
+        {
+            Vector2 moveInput = Vector2.ClampMagnitude(input.MoveInput, 1f);
+            if (moveInput.sqrMagnitude > 0.0001f)
+            {
+                return moveInput;
+            }
+        }
+
+        float movementScale = Mathf.Max(motor.GetCurrentSpeed(), 0.01f);
+        return new Vector2(
+            Mathf.Clamp(localHorizontalVelocity.x / movementScale, -1f, 1f),
+            Mathf.Clamp(localHorizontalVelocity.z / movementScale, -1f, 1f));
+    }
+
     private bool CanUseCrouchIdleClip()
     {
         return allowCrouchAnimationClips && crouchIdleClipPromoted;
@@ -427,8 +478,15 @@ public class PlayerAnimationController : MonoBehaviour
 
         if (stateName == CrouchIdleState)
         {
-            animator.Play(targetStateHash, 0, crouchIdleHoldNormalizedTime);
-            animator.Update(0f);
+            if (currentAnimatorStatePath == CrouchWalkState)
+            {
+                animator.CrossFade(targetStateHash, Mathf.Max(0.01f, fadeTime), 0, crouchIdleHoldNormalizedTime);
+            }
+            else
+            {
+                animator.Play(targetStateHash, 0, crouchIdleHoldNormalizedTime);
+                animator.Update(0f);
+            }
         }
         else
         {

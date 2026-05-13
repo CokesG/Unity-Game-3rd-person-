@@ -30,6 +30,7 @@ Mixamo import rule:
 - Keep root motion off for now. The CharacterController still owns real movement, jump height, collision, and landing.
 - Crouch-walk FBXs must preserve their original root Y pose. For those clips, keep `Root Transform Position (Y)` based on Original / not feet-normalized. If Unity normalizes them from feet, the live rig can stand upright while the state says `Crouch Move`.
 - Current live crouch movement tuning: gameplay crouch speed is `2.4`, `crouchWalkClipPromoted` is on, and `forceCrouchWalkWhenMoving` remains off in `SampleScene`. Moving crouched should use the authored directional crouch-walk set through `Crouch Walk Directional`.
+- Current crouch blend tuning: `crouchMovementDampTime` is `0.16`, `crouchWalkCrossFadeTime` is `0.24`, `crouchWalkEnterSpeed` is `0.12`, and `crouchWalkExitSpeed` is `0.04`. The separate enter/exit thresholds prevent flicker around zero speed.
 
 Assign additional clips to the live Player visual only after clips are verified in the sandbox and confirmed to be compatible with the live full-quality rig.
 

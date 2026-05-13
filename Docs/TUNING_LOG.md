@@ -160,3 +160,11 @@ Implemented:
 - Enabled `crouchWalkClipPromoted` in `SampleScene` so moving while crouched now enters `Base Layer.Crouch Walk`.
 - Kept `forceCrouchWalkWhenMoving` off; live use depends on the explicit promoted flag.
 - Preserved the sandbox `9` plus `Q` / `E` review path for future authored crouch-walk tuning.
+
+## 2026-05-12 - Crouch-Walk Directional Blend Smoothing
+
+Implemented:
+
+- Changed live crouch-walk directional parameters to use raw move input while crouched, so Back/Left/Right clips can be reached even when the player root turns toward movement.
+- Added crouch-specific movement damping and crossfade timing for smoother crouch idle-to-walk and walk-to-idle transitions.
+- Added crouch-walk enter/exit speed thresholds to reduce idle/walk flicker near zero speed.

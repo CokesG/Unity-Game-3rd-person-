@@ -17,6 +17,7 @@ Current tuning:
 - Until a true sprint clip is promoted, sprint speed still uses the `Run` visual.
 - Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
 - Crouch gameplay is active. Stand-to-crouch, crouch idle, crouch-walk, and crouch-to-stand are live-promoted. The authored directional set from `Assets/Animations/NightfallVanguard/UserCrouchWalk` maps Forward, Back, Left, and Right one-to-one to their matching FBXs. Moving crouched in `SampleScene` should use `Crouch Walk Directional`. Grounded visual grounding uses foot/toe bones first and renderer bounds only as a fallback so the visual child can be corrected without moving the `Player` root or `CharacterController`.
+- Crouch-walk blend input uses raw move input while crouched, not player-local velocity, because the player rotates toward movement and velocity-space blending can collapse left/back/right into forward. Crouch idle/walk uses a slightly softer crossfade and movement parameter damping than normal locomotion.
 - Jump uses a short safe Nightfall-native `Jump Start` clip while the physical jump stays controller-driven and tuned to a low, snappy arc (`jumpHeight` `0.5625`, `gravity` `-22`, falling gravity multiplier `1.5`). Falling and landing clips remain disabled until clean clips pass review.
 - Crossfade is `0.18` seconds so state changes do not snap.
 
