@@ -28,8 +28,8 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private int currentStateIndex;
 
     [Header("Crouch Walk Review")]
-    [SerializeField] private bool enableProceduralCrouchWalkReview;
-    [SerializeField] private bool autoLoadProceduralCrouchWalkClips = true;
+    [SerializeField] private bool enableCrouchWalkDirectionalReview = true;
+    [SerializeField] private bool autoLoadCrouchWalkReviewClips = true;
     [SerializeField] private AnimationClip[] crouchWalkReviewClips;
     [SerializeField] private int currentCrouchWalkReviewClipIndex;
 
@@ -182,7 +182,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
         {
             animator.Rebind();
             animator.Update(0f);
-            if (ShouldUseProceduralCrouchWalkReview())
+            if (ShouldUseCrouchWalkDirectionalReview())
             {
                 EnsureCrouchWalkReviewClips();
                 ApplyCrouchWalkReviewClip();
@@ -266,14 +266,14 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
         if (stateName == "Crouch Walk")
         {
-            if (ShouldUseProceduralCrouchWalkReview())
+            if (ShouldUseCrouchWalkDirectionalReview())
             {
                 EnsureCrouchWalkReviewClips();
                 ApplyCrouchWalkReviewClip();
             }
             else
             {
-                PlayAnimatorState("Crouch Idle", stateName, "Crouch-walk quarantined: showing crouch hold");
+                PlayAnimatorState("Crouch Idle", stateName, "Crouch-walk review disabled: showing crouch hold");
                 return;
             }
         }
@@ -298,19 +298,19 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private void EnsureCrouchWalkReviewClips()
     {
-        if (!ShouldUseProceduralCrouchWalkReview() || !autoLoadProceduralCrouchWalkClips || crouchWalkReviewClips != null && crouchWalkReviewClips.Length > 0)
+        if (!ShouldUseCrouchWalkDirectionalReview() || !autoLoadCrouchWalkReviewClips)
         {
             return;
         }
 
 #if UNITY_EDITOR
-        const string folder = "Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk";
+        const string folder = "Assets/Animations/NightfallVanguard/UserCrouchWalk";
         string[] directions = { "Forward", "Back", "Left", "Right" };
         List<AnimationClip> clips = new List<AnimationClip>();
 
         for (int i = 0; i < directions.Length; i++)
         {
-            string path = folder + "/NightfallVanguard_FullQuality_CrouchWalk_" + directions[i] + "_Procedural.fbx";
+            string path = folder + "/User_CrouchWalk_" + directions[i] + ".fbx";
             AnimationClip clip = LoadFirstAnimationClipAtPath(path);
             if (clip != null)
             {
@@ -340,9 +340,9 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private void CycleCrouchWalkReviewClip(int direction)
     {
-        if (!ShouldUseProceduralCrouchWalkReview())
+        if (!ShouldUseCrouchWalkDirectionalReview())
         {
-            statusText = "Procedural crouch-walk review disabled";
+            statusText = "Crouch-walk directional review disabled";
             return;
         }
 
@@ -369,7 +369,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
             return;
         }
 
-        if (!ShouldUseProceduralCrouchWalkReview())
+        if (!ShouldUseCrouchWalkDirectionalReview())
         {
             return;
         }
@@ -435,13 +435,14 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     {
         return clipName
             .Replace("Nightfall_FullQuality_", string.Empty)
+            .Replace("User_", string.Empty)
             .Replace("_Procedural", string.Empty)
             .Replace('_', ' ');
     }
 
-    private bool ShouldUseProceduralCrouchWalkReview()
+    private bool ShouldUseCrouchWalkDirectionalReview()
     {
-        return enableProceduralCrouchWalkReview;
+        return enableCrouchWalkDirectionalReview;
     }
 
     private void LateUpdate()
@@ -617,14 +618,14 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
 
     private string GetCrouchWalkReviewText()
     {
-        if (!ShouldUseProceduralCrouchWalkReview())
+        if (!ShouldUseCrouchWalkDirectionalReview())
         {
-            return "Crouch-walk: quarantined - 9 shows safe crouch hold; authored walk set required";
+            return "Crouch-walk: review disabled - 9 shows safe crouch hold";
         }
 
         AnimationClip clip = GetCurrentCrouchWalkReviewClip();
-        string clipText = clip != null ? ShortClipName(clip.name) : "no procedural clips loaded";
-        return "Crouch-walk review: " + clipText + " | Q/E cycles directional candidates";
+        string clipText = clip != null ? ShortClipName(clip.name) : "no crouch-walk clips loaded";
+        return "Crouch-walk review: " + clipText + " | Q/E cycles authored directions";
     }
 
     private void ResolveAnimator()

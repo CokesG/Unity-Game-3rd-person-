@@ -137,9 +137,26 @@ Implemented:
 - Rejected the current procedural crouch-walk review lane after live sandbox screenshots still showed broken crouch-walk body/leg presentation.
 - Changed `NightfallAnimationSandboxDriver` so `9 Crouched Walk` defaults to the safe crouch hold instead of auto-loading procedural candidates.
 - Remapped the linked sandbox controller `Crouch Walk` state to the safe crouch hold so bypassing the driver cannot show the rejected procedural clip.
-- Left procedural candidate cycling behind the manual `enableProceduralCrouchWalkReview` debug toggle only.
+- Left procedural candidate cycling quarantined behind manual debug-only tooling.
 
 Validation:
 
 - Live `SampleScene` crouch-walk promotion remains off.
 - Next acceptable path is an authored or motion-captured directional crouch-walk set, not more default routing through the rejected procedural placeholder.
+
+## 2026-05-12 - Authored Crouch-Walk Set Reconnected For Review
+
+Implemented:
+
+- Verified the downloaded `Crouch Walk Forward/Back/Left/Right.fbx` files are already present in `Assets/Animations/NightfallVanguard/UserCrouchWalk/` as matching `User_CrouchWalk_*` assets.
+- Confirmed the live `PlayerHumanoid.controller` directional blend tree maps center to crouch hold, forward to `User_Crouch_Walk_Forward`, back to `User_Crouch_Walk_Back`, left to `User_Crouch_Walk_Left`, and right to `User_Crouch_Walk_Right`.
+- Reconnected the linked sandbox `Crouch Walk` state and `NightfallAnimationSandboxDriver` review cycling to the authored user set instead of the rejected procedural set.
+- Superseded by the next pass: the authored set passed visual review and is now live-promoted in `SampleScene`.
+
+## 2026-05-12 - Authored Crouch-Walk Promoted Live
+
+Implemented:
+
+- Enabled `crouchWalkClipPromoted` in `SampleScene` so moving while crouched now enters `Base Layer.Crouch Walk`.
+- Kept `forceCrouchWalkWhenMoving` off; live use depends on the explicit promoted flag.
+- Preserved the sandbox `9` plus `Q` / `E` review path for future authored crouch-walk tuning.

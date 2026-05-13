@@ -4,7 +4,9 @@ using UnityEngine;
 
 public static class NightfallCrouchWalkImportUtility
 {
-    private const string MenuPath = "Tools/TPS/Nightfall/Reimport Procedural Crouch Walk Candidates";
+    private const string MenuPath = "Tools/TPS/Nightfall/Reimport Crouch Walk Candidates";
+    private const string LegacyMenuPath = "Tools/TPS/Nightfall/Reimport Procedural Crouch Walk Candidates";
+    private const string UserAuthoredFolder = "Assets/Animations/NightfallVanguard/UserCrouchWalk";
     private const string UserProceduralFolder = "Assets/Animations/NightfallVanguard/UserCrouchWalkProcedural";
     private const string NightfallProceduralFolder = "Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk";
 
@@ -12,14 +14,21 @@ public static class NightfallCrouchWalkImportUtility
     public static void ReimportProceduralCrouchWalkCandidates()
     {
         int configuredCount = 0;
-        configuredCount += ConfigureFolder(UserProceduralFolder, "User_Crouch_Walk");
-        configuredCount += ConfigureFolder(NightfallProceduralFolder, "Nightfall_FullQuality_CrouchWalk");
+        configuredCount += ConfigureFolder(UserAuthoredFolder, "User_Crouch_Walk", string.Empty);
+        configuredCount += ConfigureFolder(UserProceduralFolder, "User_Crouch_Walk", "_Procedural");
+        configuredCount += ConfigureFolder(NightfallProceduralFolder, "Nightfall_FullQuality_CrouchWalk", "_Procedural");
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"Configured {configuredCount} procedural crouch-walk candidate importers.");
+        Debug.Log($"Configured {configuredCount} crouch-walk candidate importers.");
     }
 
-    private static int ConfigureFolder(string folder, string clipPrefix)
+    [MenuItem(LegacyMenuPath)]
+    public static void ReimportProceduralCrouchWalkCandidatesLegacy()
+    {
+        ReimportProceduralCrouchWalkCandidates();
+    }
+
+    private static int ConfigureFolder(string folder, string clipPrefix, string clipSuffix)
     {
         string[] guids = AssetDatabase.FindAssets("t:Model", new[] { folder });
         int configuredCount = 0;
@@ -33,7 +42,7 @@ public static class NightfallCrouchWalkImportUtility
                 continue;
             }
 
-            ConfigureImporter(importer, path, clipPrefix);
+            ConfigureImporter(importer, path, clipPrefix, clipSuffix);
             importer.SaveAndReimport();
             configuredCount++;
         }
@@ -41,7 +50,7 @@ public static class NightfallCrouchWalkImportUtility
         return configuredCount;
     }
 
-    private static void ConfigureImporter(ModelImporter importer, string path, string clipPrefix)
+    private static void ConfigureImporter(ModelImporter importer, string path, string clipPrefix, string clipSuffix)
     {
         importer.importAnimation = true;
         importer.animationType = ModelImporterAnimationType.Human;
@@ -64,7 +73,7 @@ public static class NightfallCrouchWalkImportUtility
         string direction = ResolveDirection(path);
         for (int i = 0; i < clips.Length; i++)
         {
-            clips[i].name = $"{clipPrefix}_{direction}_Procedural";
+            clips[i].name = $"{clipPrefix}_{direction}{clipSuffix}";
             clips[i].loopTime = true;
             clips[i].loopPose = true;
             clips[i].lockRootHeightY = true;
@@ -83,9 +92,15 @@ public static class NightfallCrouchWalkImportUtility
     private static string ResolveDirection(string path)
     {
         string fileName = System.IO.Path.GetFileNameWithoutExtension(path);
-        if (fileName.IndexOf("_Back_", StringComparison.Ordinal) >= 0) return "Back";
-        if (fileName.IndexOf("_Left_", StringComparison.Ordinal) >= 0) return "Left";
-        if (fileName.IndexOf("_Right_", StringComparison.Ordinal) >= 0) return "Right";
+        if (HasDirectionToken(fileName, "Back")) return "Back";
+        if (HasDirectionToken(fileName, "Left")) return "Left";
+        if (HasDirectionToken(fileName, "Right")) return "Right";
         return "Forward";
+    }
+
+    private static bool HasDirectionToken(string fileName, string direction)
+    {
+        return fileName.EndsWith("_" + direction, StringComparison.Ordinal)
+            || fileName.IndexOf("_" + direction + "_", StringComparison.Ordinal) >= 0;
     }
 }

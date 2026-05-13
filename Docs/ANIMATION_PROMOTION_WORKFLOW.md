@@ -14,12 +14,12 @@ This project promotes hero animation one clip at a time. The Player root, `Chara
   - `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
   - `Crouch Idle`: held final frame of `User_Stand_To_Crouch`, state speed `0`
   - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
-- `Crouch Walk` is quarantined for live play and sandbox default review. The latest full-quality procedural candidates are rejected for hero use, so `9 Crouched Walk` shows the safe crouch hold unless procedural review is manually enabled for debugging. `crouchWalkClipPromoted` and `forceCrouchWalkWhenMoving` must stay off in `SampleScene` until a real directional set is approved.
+- `Crouch Walk` is promoted for live play from the authored directional set. `9 Crouched Walk` starts on `User_Crouch_Walk_Forward`, and `Q` / `E` cycles Back, Left, and Right in the linked sandbox. `SampleScene` has `crouchWalkClipPromoted` enabled and keeps `forceCrouchWalkWhenMoving` off.
 - While crouched and moving, the live character should hold the reviewed crouch pose until a proper crouch-walk set is authored and passes sandbox review.
 - First-pass procedural crouch-walk candidates are generated under `Assets/Animations/NightfallVanguard/UserCrouchWalkProcedural/` from the accepted `User_StandToCrouch_Crouching` final pose.
-- Grounded full-quality Nightfall procedural crouch-walk candidates are generated under `Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk/` by `Tools/Blender/create_nightfall_crouch_walk_procedural.py`, but the current outputs remain reference/debug assets only.
-- `NightfallAnimationSandboxDriver` keeps procedural crouch-walk review disabled by default. Enable `enableProceduralCrouchWalkReview` manually only when inspecting the rejected forward/back/left/right candidate clips with `Q` / `E`. This is not a live promotion or approval path.
-- Reimport candidate FBXs with `Tools/TPS/Nightfall/Reimport Procedural Crouch Walk Candidates` after regenerating them in Blender.
+- Grounded full-quality Nightfall procedural crouch-walk candidates are generated under `Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk/` by `Tools/Blender/create_nightfall_crouch_walk_procedural.py`, but those outputs remain reference/debug assets only.
+- The authored crouch-walk source set is under `Assets/Animations/NightfallVanguard/UserCrouchWalk/` and should be reviewed one direction at a time: Forward, Back, Left, Right.
+- Reimport candidate FBXs with `Tools/TPS/Nightfall/Reimport Crouch Walk Candidates` after replacing or regenerating them.
 - `PlayerAnimationController` grounds the visual child while grounded by comparing foot/toe bones to the `CharacterController` capsule foot. Renderer bounds are only a fallback. This corrects vertical/root offset from clips without moving the gameplay root.
 - Animation Rigging is now part of the project. Use `Tools/TPS/Nightfall/Setup Animation Rigging Helpers` after Package Manager resolves `com.unity.animation.rigging`.
 - `PlayerAnimationController.allowCrouchAnimationClips` is on for the currently reviewed crouch set. If a crouch clip regresses, turn off only that individual promoted flag instead of disabling the whole movement system.
@@ -145,7 +145,7 @@ The linked sandbox is intentionally conservative right now:
 - `4 Jump Start` and `Running Jump` use `Nightfall_FullQuality_JumpSafe_Baked`.
 - `7 Stand -> Crouch` and `0 Crouch -> Stand` are now live-promoted after sandbox review.
 - `8 Crouched Idle` remains sandbox-only. Live crouch idle currently holds the first frame of `Mixamo_Crouched_To_Standing` because the dedicated crouch idle clip leaned the character.
-- `9 Crouched Walk` shows the safe crouch hold by default because the procedural crouch-walk set is rejected. Review future authored/mocap crouch-walk clips from front and side for foot contact, pelvis height, arm pose, and leg crossing before building or promoting the full directional set.
+- `9 Crouched Walk` reviews the authored directional set. Review each direction from front and side for foot contact, pelvis height, arm pose, and leg crossing before promoting the full directional set.
 - Unknown, attack, and ability preview states fall back to idle/walk until each clip is promoted safely.
 
 Do not promote the remaining crouch states into `SampleScene` just because the buttons move. The sandbox is where we decide whether the clip quality is acceptable; live crouch gameplay should keep the stable held crouch idle even while trialing crouch-walk.
