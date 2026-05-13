@@ -114,13 +114,12 @@ That still deformed the character. The likely root cause was the Blender bake pa
 
 ## Next Recommended Order
 
-1. Verify the safe jump with `jumpHeight` `0.5625`.
-2. Test live `C` crouch entry/idle/walk/exit after the crouch set promotion.
-3. Run `Tools/TPS/Nightfall/Setup Animation Rigging Helpers` and tune foot IK weights/offsets.
-4. Promote a sprint clip for Shift.
-5. Find or author a clean falling loop.
-6. Find or author soft and hard landings.
-7. Replace hard state switching with a locomotion Blend Tree after idle, walk, run, sprint, jump, crouch, and aim basics are stable.
+1. Build and approve a live aim-strafe directional state or blend tree.
+2. Run `Tools/TPS/Nightfall/Setup Animation Rigging Helpers` and tune foot IK weights/offsets.
+3. Promote a sprint clip for Shift.
+4. Find or author a clean falling loop.
+5. Find or author soft and hard landings.
+6. Replace hard state switching with broader locomotion Blend Trees after idle, walk, run, sprint, jump, crouch, and aim basics are stable.
 
 ## Linked Sandbox Stability Test
 

@@ -168,3 +168,12 @@ Implemented:
 - Changed live crouch-walk directional parameters to use raw move input while crouched, so Back/Left/Right clips can be reached even when the player root turns toward movement.
 - Added crouch-specific movement damping and crossfade timing for smoother crouch idle-to-walk and walk-to-idle transitions.
 - Added crouch-walk enter/exit speed thresholds to reduce idle/walk flicker near zero speed.
+
+## 2026-05-12 - Combat Locomotion Debug And Crouch Stability
+
+Implemented:
+
+- Added F1 animation telemetry for movement state, `MovementX` / `MovementY`, crouch-walk visual activity, Animator state path, crouch transition timer, and visual grounding offset.
+- Added crouch weapon stability tuning: crouched non-slide firing applies `crouchSpreadMultiplier` and `crouchRecoilMultiplier`.
+- Added F1 weapon telemetry for stance spread and recoil multipliers so crouch accuracy/recoil tuning is visible during test-gym passes.
+- Kept aim-strafe live promotion blocked for now because `PlayerHumanoid.controller` does not yet contain a live aim-strafe state or directional aim blend tree.

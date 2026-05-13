@@ -1114,6 +1114,7 @@ MonoBehaviour:
   walkClipPromoted: 1
   runClipPromoted: 1
   sprintClipPromoted: 0
+  aimStrafeClipPromoted: 0
   jumpClipPromoted: 1
   airClipPromoted: 0
   landClipPromoted: 0
@@ -1145,6 +1146,7 @@ MonoBehaviour:
   currentIsCrouching: 0
   currentIsSliding: 0
   currentUsesRunVisual: 0
+  currentUsesCrouchWalkVisual: 0
   currentLandingStateTime: 0
   currentCrouchTransitionStateTime: 0
   currentVisualGroundOffset: 0

@@ -44,6 +44,7 @@ public class WeaponDefinition : ScriptableObject
     public float movingSpreadAddDegrees = 0.65f;
     public float airborneSpreadAddDegrees = 1.1f;
     public float slideSpreadAddDegrees = 1.4f;
+    [Range(0.25f, 1f)] public float crouchSpreadMultiplier = 0.82f;
     public float spreadPerShot = 0.18f;
     public float maxSpreadAddDegrees = 2.2f;
     public float spreadRecoveryPerSecond = 6f;
@@ -58,6 +59,7 @@ public class WeaponDefinition : ScriptableObject
     public float recoilYawPatternStep = 0.045f;
     public float maxRecoilYawPattern = 0.28f;
     public float recoilYawRandomness = 0.04f;
+    [Range(0.25f, 1f)] public float crouchRecoilMultiplier = 0.85f;
 
     [Header("Movement Multipliers")]
     public float aimMovementMultiplier = 0.75f;

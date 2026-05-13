@@ -282,6 +282,7 @@ public static class TpsTestGymBuilder
         rifle.movingSpreadAddDegrees = 0.65f;
         rifle.airborneSpreadAddDegrees = 1.1f;
         rifle.slideSpreadAddDegrees = 1.4f;
+        rifle.crouchSpreadMultiplier = 0.82f;
         rifle.cameraRecoilPitch = 0.42f;
         rifle.cameraRecoilYaw = 0.18f;
         rifle.recoilResetDelay = 0.25f;
@@ -290,6 +291,7 @@ public static class TpsTestGymBuilder
         rifle.recoilYawPatternStep = 0.045f;
         rifle.maxRecoilYawPattern = 0.28f;
         rifle.recoilYawRandomness = 0.04f;
+        rifle.crouchRecoilMultiplier = 0.85f;
 
         AssetDatabase.CreateAsset(rifle, WeaponPath);
         return rifle;

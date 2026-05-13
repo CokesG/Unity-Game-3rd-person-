@@ -10,6 +10,7 @@ public class TPSReticleHUD : MonoBehaviour
     [SerializeField] private PlayerWeaponController weaponController;
     [SerializeField] private ThirdPersonCameraController cameraController;
     [SerializeField] private ThirdPersonMotor motor;
+    [SerializeField] private PlayerAnimationController animationController;
     [SerializeField] private bool showDebugReadout = true;
     [SerializeField] private float spreadPixelMultiplier = 9f;
     [SerializeField] private float minCrosshairGap = 5f;
@@ -47,6 +48,11 @@ public class TPSReticleHUD : MonoBehaviour
         if (motor == null)
         {
             motor = FindAnyObjectByType<ThirdPersonMotor>();
+        }
+
+        if (animationController == null)
+        {
+            animationController = FindAnyObjectByType<PlayerAnimationController>();
         }
     }
 
@@ -167,10 +173,10 @@ public class TPSReticleHUD : MonoBehaviour
         Color oldColor = GUI.color;
         Color oldContentColor = GUI.contentColor;
         GUI.color = new Color(0f, 0f, 0f, 0.68f);
-        GUI.Box(new Rect(20f, 52f, 620f, 460f), GUIContent.none);
+        GUI.Box(new Rect(20f, 52f, 660f, 500f), GUIContent.none);
         GUI.color = oldColor;
         GUI.contentColor = Color.white;
-        GUI.Label(new Rect(32f, 62f, 596f, 440f), debugBuilder.ToString());
+        GUI.Label(new Rect(32f, 62f, 636f, 480f), debugBuilder.ToString());
         GUI.contentColor = oldContentColor;
     }
 
@@ -198,6 +204,7 @@ public class TPSReticleHUD : MonoBehaviour
             .AppendLine();
 
         AppendMovementMetrics();
+        AppendAnimationMetrics();
         AppendRecoilMetrics(weapon);
 
         debugBuilder.Append("Shots: ").Append(weaponController.TotalShotsFired)
@@ -226,6 +233,7 @@ public class TPSReticleHUD : MonoBehaviour
             .Append(" deg | Add: ").Append(weaponController.SpreadAddDegrees.ToString("0.00"))
             .Append(" | Hip/ADS: ").Append(weapon.hipSpreadDegrees.ToString("0.00"))
             .Append('/').Append(weapon.adsSpreadDegrees.ToString("0.00"))
+            .Append(" | Stance x").Append(weaponController.StanceSpreadMultiplier.ToString("0.00"))
             .Append(" | Recover: ").Append(weapon.spreadRecoveryPerSecond.ToString("0.0")).Append("/s")
             .AppendLine();
 
@@ -296,7 +304,8 @@ public class TPSReticleHUD : MonoBehaviour
     {
         debugBuilder.Append("Recoil: burst ").Append(weaponController.RecoilBurstShotIndex)
             .Append(" | kick P/Y ").Append(weaponController.LastRecoilPitchKick.ToString("0.00"))
-            .Append('/').Append(weaponController.LastRecoilYawKick.ToString("0.00"));
+            .Append('/').Append(weaponController.LastRecoilYawKick.ToString("0.00"))
+            .Append(" | stance x").Append(weaponController.StanceRecoilMultiplier.ToString("0.00"));
 
         if (cameraController != null)
         {
@@ -305,6 +314,27 @@ public class TPSReticleHUD : MonoBehaviour
         }
 
         debugBuilder.Append(" | reset ").Append(weapon.recoilResetDelay.ToString("0.00")).Append('s')
+            .AppendLine();
+    }
+
+    private void AppendAnimationMetrics()
+    {
+        if (animationController == null)
+        {
+            return;
+        }
+
+        debugBuilder.Append("Anim: ").Append(animationController.CurrentMovementState)
+            .Append(" | MX/MY ").Append(animationController.CurrentMovementX.ToString("0.00"))
+            .Append('/').Append(animationController.CurrentMovementY.ToString("0.00"))
+            .Append(" | CWalk ").Append(animationController.CurrentUsesCrouchWalkVisual ? "yes" : "no")
+            .Append(" | State ").Append(string.IsNullOrEmpty(animationController.CurrentAnimatorStatePath) ? "-" : animationController.CurrentAnimatorStatePath)
+            .AppendLine();
+
+        debugBuilder.Append("Anim timers: crouchTrans ").Append(animationController.CurrentCrouchTransitionStateTime.ToString("0.00"))
+            .Append(" | visualGround ").Append(animationController.CurrentVisualGroundOffset.ToString("0.000"))
+            .Append(" | crouchStable ").Append(weaponController.IsCrouchStabilized ? "yes" : "no")
+            .Append(" | aimStrafe ").Append(animationController.AimStrafeClipPromoted ? "live" : "blocked")
             .AppendLine();
     }
 

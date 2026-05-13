@@ -18,6 +18,8 @@ Current tuning:
 - Aim uses slower movement and currently falls back to the `Walk` visual until aim-specific clips are promoted.
 - Crouch gameplay is active. Stand-to-crouch, crouch idle, crouch-walk, and crouch-to-stand are live-promoted. The authored directional set from `Assets/Animations/NightfallVanguard/UserCrouchWalk` maps Forward, Back, Left, and Right one-to-one to their matching FBXs. Moving crouched in `SampleScene` should use `Crouch Walk Directional`. Grounded visual grounding uses foot/toe bones first and renderer bounds only as a fallback so the visual child can be corrected without moving the `Player` root or `CharacterController`.
 - Crouch-walk blend input uses raw move input while crouched, not player-local velocity, because the player rotates toward movement and velocity-space blending can collapse left/back/right into forward. Crouch idle/walk uses a slightly softer crossfade and movement parameter damping than normal locomotion.
+- Crouched firing is intentionally steadier: current prototype tuning multiplies spread by `0.82` and camera recoil by `0.85` while crouched and not sliding. F1 shows the active stance multipliers.
+- Aim movement still uses the safe walk visual in live play. The sandbox has an `Aim Walk / Strafe` preview lane, but live `PlayerHumanoid.controller` still needs an approved aim-strafe state or blend tree before promotion.
 - Jump uses a short safe Nightfall-native `Jump Start` clip while the physical jump stays controller-driven and tuned to a low, snappy arc (`jumpHeight` `0.5625`, `gravity` `-22`, falling gravity multiplier `1.5`). Falling and landing clips remain disabled until clean clips pass review.
 - Crossfade is `0.18` seconds so state changes do not snap.
 

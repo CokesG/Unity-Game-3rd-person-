@@ -26,6 +26,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
     [SerializeField] private bool sprintClipPromoted;
+    [SerializeField] private bool aimStrafeClipPromoted;
     [SerializeField] private bool jumpClipPromoted;
     [SerializeField] private bool airClipPromoted;
     [SerializeField] private bool landClipPromoted;
@@ -62,6 +63,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool currentIsCrouching;
     [SerializeField] private bool currentIsSliding;
     [SerializeField] private bool currentUsesRunVisual;
+    [SerializeField] private bool currentUsesCrouchWalkVisual;
     [SerializeField] private float currentLandingStateTime;
     [SerializeField] private float currentCrouchTransitionStateTime;
     [SerializeField] private float currentVisualGroundOffset;
@@ -196,6 +198,7 @@ public class PlayerAnimationController : MonoBehaviour
         UpdateLandingStateTimer();
         UpdateCrouchTransitionStateTimers();
         UpdateCrouchWalkVisualState();
+        currentUsesCrouchWalkVisual = wantsCrouchWalkVisual;
         currentLandingStateTime = landingStateTimer;
         currentCrouchTransitionStateTime = Mathf.Max(standToCrouchStateTimer, standUpStateTimer);
         currentMovementState = ResolveMovementState();
@@ -248,6 +251,15 @@ public class PlayerAnimationController : MonoBehaviour
     public void TriggerAbilitySecondary() => SetTriggerIfAvailable(abilitySecondaryHash);
     public void TriggerUltimate() => SetTriggerIfAvailable(ultimateHash);
     public void TriggerSlide() => SetTriggerIfAvailable(slideHash);
+    public string CurrentMovementState => currentMovementState;
+    public float CurrentMovementX => currentMovementX;
+    public float CurrentMovementY => currentMovementY;
+    public bool CurrentUsesCrouchWalkVisual => currentUsesCrouchWalkVisual;
+    public bool CurrentUsesRunVisual => currentUsesRunVisual;
+    public bool AimStrafeClipPromoted => aimStrafeClipPromoted;
+    public float CurrentCrouchTransitionStateTime => currentCrouchTransitionStateTime;
+    public float CurrentVisualGroundOffset => currentVisualGroundOffset;
+    public string CurrentAnimatorStatePath => currentAnimatorStatePath;
 
     private void UpdateLocomotionState()
     {

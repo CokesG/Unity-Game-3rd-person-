@@ -38,6 +38,8 @@ public class PlayerWeaponController : MonoBehaviour
     [SerializeField] private int recoilBurstShotIndex;
     [SerializeField] private float lastRecoilPitchKick;
     [SerializeField] private float lastRecoilYawKick;
+    [SerializeField] private float stanceSpreadMultiplier = 1f;
+    [SerializeField] private float stanceRecoilMultiplier = 1f;
     [SerializeField] private float metricsWindowSeconds = 5f;
 
     private PlayerInputHandler input;
@@ -85,6 +87,9 @@ public class PlayerWeaponController : MonoBehaviour
     public int RecoilBurstShotIndex => recoilBurstShotIndex;
     public float LastRecoilPitchKick => lastRecoilPitchKick;
     public float LastRecoilYawKick => lastRecoilYawKick;
+    public float StanceSpreadMultiplier => stanceSpreadMultiplier;
+    public float StanceRecoilMultiplier => stanceRecoilMultiplier;
+    public bool IsCrouchStabilized => motor != null && motor.IsCrouching() && !motor.IsSliding();
     public float Accuracy01 => totalShotsFired > 0 ? totalRegisteredHits / (float)totalShotsFired : 0f;
     public float WorldHitRate01 => totalShotsFired > 0 ? totalWorldHits / (float)totalShotsFired : 0f;
     public float CriticalRate01 => totalRegisteredHits > 0 ? totalCriticalHits / (float)totalRegisteredHits : 0f;
@@ -378,8 +383,20 @@ public class PlayerWeaponController : MonoBehaviour
             currentSpreadDegrees += activeWeapon.slideSpreadAddDegrees;
         }
 
+        stanceSpreadMultiplier = ResolveStanceSpreadMultiplier(activeWeapon);
+        currentSpreadDegrees *= stanceSpreadMultiplier;
         currentSpreadDegrees += spreadAddDegrees;
         return currentSpreadDegrees;
+    }
+
+    private float ResolveStanceSpreadMultiplier(WeaponDefinition activeWeapon)
+    {
+        if (motor != null && motor.IsCrouching() && !motor.IsSliding())
+        {
+            return Mathf.Clamp(activeWeapon.crouchSpreadMultiplier, 0.25f, 1f);
+        }
+
+        return 1f;
     }
 
     private Vector3 ApplySpread(Vector3 direction, float spreadDegrees)
@@ -415,10 +432,23 @@ public class PlayerWeaponController : MonoBehaviour
             yawKick += Random.Range(-activeWeapon.recoilYawRandomness, activeWeapon.recoilYawRandomness);
         }
 
+        stanceRecoilMultiplier = ResolveStanceRecoilMultiplier(activeWeapon);
+        pitchKick *= stanceRecoilMultiplier;
+        yawKick *= stanceRecoilMultiplier;
         lastRecoilPitchKick = pitchKick;
         lastRecoilYawKick = yawKick;
         recoilBurstShotIndex++;
         cameraController.AddRecoil(pitchKick, yawKick);
+    }
+
+    private float ResolveStanceRecoilMultiplier(WeaponDefinition activeWeapon)
+    {
+        if (motor != null && motor.IsCrouching() && !motor.IsSliding())
+        {
+            return Mathf.Clamp(activeWeapon.crouchRecoilMultiplier, 0.25f, 1f);
+        }
+
+        return 1f;
     }
 
     private void ResolveHit(WeaponDefinition activeWeapon, Ray shotRay, bool didHit, RaycastHit shotHit)
