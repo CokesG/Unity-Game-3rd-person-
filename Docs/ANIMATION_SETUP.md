@@ -14,7 +14,7 @@ The live controller is assigned to the full-quality Nightfall visual in `SampleS
 - `Jump Start`: `Nightfall_FullQuality_JumpSafe_Baked` from `Assets/Art/Characters/NightfallVanguard/Exports/NightfallVanguard_FullQuality_JumpSafe_Baked.fbx`
 - `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
 - `Crouch Idle`: held final frame of `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`, state speed `0`
-- `Crouch Walk`: promoted for live play from the authored `User_Crouch_Walk_Forward/Back/Left/Right` set. The linked sandbox still reviews the set with `9 Crouched Walk` plus `Q` / `E`.
+- `Crouch Walk`: pulled from live play. The authored `User_Crouch_Walk_Forward/Back/Left/Right` set remains in the project for later audit, but `SampleScene` holds the stable crouch pose while moving.
 - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
 - Grounded visual foot/toe correction in `PlayerAnimationController` keeps the visual child aligned to the `CharacterController` capsule foot without moving the gameplay root.
 - `Mixamo_CrouchingIdle`, `Mixamo_CrouchWalking`, `Nightfall_Mixamo_CrouchIdle_Baked`, `Nightfall_Mixamo_CrouchWalk_Baked`, and `Nightfall_Mixamo_StandUp_Baked` are quarantined because they deform or lean the live Nightfall rig.
@@ -29,7 +29,7 @@ Mixamo import rule:
 - For this project, the Mixamo source files are then baked in Blender onto the Nightfall skeleton with `Tools/Blender/bake_mixamo_to_nightfall.py`, and the live controller uses those baked Nightfall FBXs.
 - Keep root motion off for now. The CharacterController still owns real movement, jump height, collision, and landing.
 - Crouch-walk FBXs must preserve their original root Y pose. For those clips, keep `Root Transform Position (Y)` based on Original / not feet-normalized. If Unity normalizes them from feet, the live rig can stand upright while the state says `Crouch Move`.
-- Current live crouch movement tuning: gameplay crouch speed is `2.4`, `crouchWalkClipPromoted` is on, and `forceCrouchWalkWhenMoving` remains off in `SampleScene`. Moving crouched should use the authored directional crouch-walk set through `Crouch Walk Directional`.
+- Current live crouch movement tuning: gameplay crouch speed is `2.4`, `crouchWalkClipPromoted` is off, and `forceCrouchWalkWhenMoving` remains off in `SampleScene`. Moving crouched should hold the stable crouch pose until the crouch-walk set is re-audited.
 - Current crouch blend tuning: `crouchMovementDampTime` is `0.16`, `crouchWalkCrossFadeTime` is `0.30`, `crouchTransitionCrossFadeTime` is `0.16`, `crouchWalkEnterSpeed` is `0.12`, and `crouchWalkExitSpeed` is `0.04`. The separate enter/exit thresholds prevent flicker around zero speed.
 - Current slide-to-crouch stability tuning: `slideGroundStickForce` is `8` and `slideExitSpeedCarry` is `1.1`.
 - F1 animation telemetry shows the current movement state, `MovementX` / `MovementY`, whether crouch-walk is active, current Animator state path, crouch transition timer, and visual grounding offset.
@@ -148,9 +148,9 @@ The live `PlayerAnimationController` is parameter-driven by default. Leave `driv
 
 Current live exception: `driveAnimatorStateMachine` is enabled while we promote clips one at a time. `walkClipPromoted` and `runClipPromoted` are true, so normal WASD movement uses `Run`, while Alt slow walk and aim movement use safe idle/walk visuals until their own clips are promoted. Jump uses a short, safe, Nightfall-native clip built from the working run rig. Sprint is still intentionally unpromoted.
 
-`PlayerAnimationController.allowCrouchAnimationClips` is enabled in `SampleScene` for the current user crouch set. `standToCrouchClipPromoted`, `crouchIdleClipPromoted`, `crouchWalkClipPromoted`, and `standUpClipPromoted` are true. `forceCrouchWalkWhenMoving` remains false. While crouched and moving, the Animator should use the authored directional crouch-walk set.
+`PlayerAnimationController.allowCrouchAnimationClips` is enabled in `SampleScene` for the current user crouch set. `standToCrouchClipPromoted`, `crouchIdleClipPromoted`, and `standUpClipPromoted` are true. `crouchWalkClipPromoted` and `forceCrouchWalkWhenMoving` are false. While crouched and moving, the Animator should hold the stable crouch pose.
 
-The authored directional set is wired into the `PlayerHumanoid.controller` `Crouch Walk Directional` blend tree, and `SampleScene` enables `crouchWalkClipPromoted`. The linked sandbox auto-loads the authored forward/back/left/right clips for `9 Crouched Walk` so future edits can still be reviewed safely before replacing live clips.
+The authored directional set is wired into the `PlayerHumanoid.controller` `Crouch Walk Directional` blend tree, but `SampleScene` keeps `crouchWalkClipPromoted` off. The linked sandbox can still review the authored forward/back/left/right clips by manually enabling `enableCrouchWalkDirectionalReview` on `NightfallAnimationSandboxDriver`.
 
 If crouch suddenly looks diagonal or asymmetrical again, inspect the `SampleScene` prefab instance before touching animation clips. The scene should not store individual Nightfall bone `m_LocalPosition`, `m_LocalRotation`, or `m_LocalEulerAnglesHint` overrides. Animation clips own bone poses at runtime; the scene should only store root placement, Animator settings, and gameplay component references.
 

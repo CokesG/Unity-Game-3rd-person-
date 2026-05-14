@@ -28,7 +28,7 @@ Current live promotion:
   - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
 - The current crouch animation test promotes transition down, held crouch idle, and transition up. `allowCrouchAnimationClips` is enabled, but crouch-walk promotion is disabled. While crouched, including while moving, the Animator should hold the final frame of `User_Stand_To_Crouch`.
 - Grounded full-quality procedural crouch-walk candidates exist under `Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk/`, but the current set is rejected for hero use because the leg cycle and stance still read broken in the linked sandbox.
-- The linked sandbox `Crouch Walk` state is mapped to the authored `User_Crouch_Walk_Forward` clip. `NightfallAnimationSandboxDriver` auto-loads the authored forward/back/left/right clips from `Assets/Animations/NightfallVanguard/UserCrouchWalk` and cycles them with `Q` / `E` while `9 Crouched Walk` is active. The same authored set is now promoted in live `SampleScene`.
+- The linked sandbox keeps crouch-walk review disabled by default. `9 Crouched Walk` shows the safe crouch hold unless `NightfallAnimationSandboxDriver.enableCrouchWalkDirectionalReview` is manually enabled to audit the authored forward/back/left/right clips from `Assets/Animations/NightfallVanguard/UserCrouchWalk`. The authored set is not promoted in live `SampleScene`.
 - Current diagnosis: the Blender bake path is the problem. `Tools/Blender/bake_mixamo_to_nightfall.py` uses local `COPY_TRANSFORMS` constraints from Mixamo bones to Nightfall bones. That does not account for different rest-pose bone axes, so crouch poses can rotate the Nightfall rig into a folded/floating shape even when the original Mixamo source clip is reasonable.
 - Mixamo jump clips are currently quarantined:
   - `Mixamo_Jumping.fbx` was baked into `Nightfall_Mixamo_JumpFull_Baked`, but the preview leans too aggressively and causes a ragdoll-like visual in live play.
@@ -122,7 +122,7 @@ Practical rule for this project:
 | Landing | inactive/reference: `Nightfall_Mixamo_JumpLand_Baked` |
 | Stand To Crouch | live: `User_Stand_To_Crouch` |
 | Crouch Idle | live: held final frame of `User_Stand_To_Crouch` |
-| Crouch Walk | live: `Crouch Walk Directional` blend tree using authored `User_Crouch_Walk_Forward/Back/Left/Right`; sandbox `Q` / `E` cycles the same set |
+| Crouch Walk | live quarantined; sandbox `9` shows safe crouch hold by default; manual review can cycle authored `User_Crouch_Walk_Forward/Back/Left/Right` |
 | Stand Up | live: `User_Crouch_To_Stand` |
 | Running Jump Preview | `Nightfall_Mixamo_RunningJump_Baked` |
 | Aim Walk / Strafe | `Nightfall_AimWalkStrafe.anim` |

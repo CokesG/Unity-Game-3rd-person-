@@ -28,7 +28,7 @@ public class NightfallAnimationSandboxDriver : MonoBehaviour
     [SerializeField] private int currentStateIndex;
 
     [Header("Crouch Walk Review")]
-    [SerializeField] private bool enableCrouchWalkDirectionalReview = true;
+    [SerializeField] private bool enableCrouchWalkDirectionalReview;
     [SerializeField] private bool autoLoadCrouchWalkReviewClips = true;
     [SerializeField] private AnimationClip[] crouchWalkReviewClips;
     [SerializeField] private int currentCrouchWalkReviewClipIndex;

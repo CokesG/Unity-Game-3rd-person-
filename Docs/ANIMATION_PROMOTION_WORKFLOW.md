@@ -14,11 +14,11 @@ This project promotes hero animation one clip at a time. The Player root, `Chara
   - `Stand To Crouch`: `User_Stand_To_Crouch` from `Assets/Animations/NightfallVanguard/UserCrouch/User_StandToCrouch_Crouching.fbx`
   - `Crouch Idle`: held final frame of `User_Stand_To_Crouch`, state speed `0`
   - `Stand Up`: `User_Crouch_To_Stand` from `Assets/Animations/NightfallVanguard/UserCrouch/User_CrouchToStand_Standing.fbx`
-- `Crouch Walk` is promoted for live play from the authored directional set. `9 Crouched Walk` starts on `User_Crouch_Walk_Forward`, and `Q` / `E` cycles Back, Left, and Right in the linked sandbox. `SampleScene` has `crouchWalkClipPromoted` enabled and keeps `forceCrouchWalkWhenMoving` off.
+- `Crouch Walk` is pulled from live play. `SampleScene` has `crouchWalkClipPromoted` and `forceCrouchWalkWhenMoving` off, so moving while crouched holds the stable crouch pose until the directional set is re-audited.
 - While crouched and moving, the live character should hold the reviewed crouch pose until a proper crouch-walk set is authored and passes sandbox review.
 - First-pass procedural crouch-walk candidates are generated under `Assets/Animations/NightfallVanguard/UserCrouchWalkProcedural/` from the accepted `User_StandToCrouch_Crouching` final pose.
 - Grounded full-quality Nightfall procedural crouch-walk candidates are generated under `Assets/Art/Characters/NightfallVanguard/Exports/ProceduralCrouchWalk/` by `Tools/Blender/create_nightfall_crouch_walk_procedural.py`, but those outputs remain reference/debug assets only.
-- The authored crouch-walk source set is under `Assets/Animations/NightfallVanguard/UserCrouchWalk/` and should be reviewed one direction at a time: Forward, Back, Left, Right.
+- The authored crouch-walk source set remains under `Assets/Animations/NightfallVanguard/UserCrouchWalk/` for later audit. Review one direction at a time: Forward, Back, Left, Right.
 - Reimport candidate FBXs with `Tools/TPS/Nightfall/Reimport Crouch Walk Candidates` after replacing or regenerating them.
 - `PlayerAnimationController` grounds the visual child while grounded by comparing foot/toe bones to the `CharacterController` capsule foot. Renderer bounds are only a fallback. This corrects vertical/root offset from clips without moving the gameplay root.
 - Animation Rigging is now part of the project. Use `Tools/TPS/Nightfall/Setup Animation Rigging Helpers` after Package Manager resolves `com.unity.animation.rigging`.

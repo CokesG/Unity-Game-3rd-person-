@@ -151,7 +151,7 @@ Implemented:
 - Verified the downloaded `Crouch Walk Forward/Back/Left/Right.fbx` files are already present in `Assets/Animations/NightfallVanguard/UserCrouchWalk/` as matching `User_CrouchWalk_*` assets.
 - Confirmed the live `PlayerHumanoid.controller` directional blend tree maps center to crouch hold, forward to `User_Crouch_Walk_Forward`, back to `User_Crouch_Walk_Back`, left to `User_Crouch_Walk_Left`, and right to `User_Crouch_Walk_Right`.
 - Reconnected the linked sandbox `Crouch Walk` state and `NightfallAnimationSandboxDriver` review cycling to the authored user set instead of the rejected procedural set.
-- Superseded by the next pass: the authored set passed visual review and is now live-promoted in `SampleScene`.
+- Superseded by the rollback below: the authored set stayed too unreliable in play and is no longer live-promoted in `SampleScene`.
 
 ## 2026-05-12 - Authored Crouch-Walk Promoted Live
 
@@ -165,7 +165,7 @@ Implemented:
 
 Implemented:
 
-- Changed live crouch-walk directional parameters to use raw move input while crouched, so Back/Left/Right clips can be reached even when the player root turns toward movement.
+- Changed the dormant crouch-walk directional parameters to use raw move input while crouched, so Back/Left/Right clips can be reached during future review even when the player root turns toward movement.
 - Added crouch-specific movement damping and crossfade timing for smoother crouch idle-to-walk and walk-to-idle transitions.
 - Added crouch-walk enter/exit speed thresholds to reduce idle/walk flicker near zero speed.
 
@@ -186,3 +186,11 @@ Implemented:
 - Capped horizontal speed carry when a slide exits into crouch, reducing launch-like carryover if the slide ends while grounding is unstable.
 - Increased crouch idle/walk crossfade and separated crouch transition crossfade from jump/air timings for smoother crouch entry, crouch walk, and crouch exit.
 - Added F1 `leftGround` visibility beside slide speed to help diagnose slide/crouch launch bugs.
+
+## 2026-05-14 - Crouch-Walk Pulled From Live
+
+Implemented:
+
+- Disabled `crouchWalkClipPromoted` in `SampleScene` so moving while crouched returns to the stable held crouch pose.
+- Disabled default linked-sandbox crouch-walk directional review; `9 Crouched Walk` shows the safe crouch hold unless review is manually enabled.
+- Kept the authored crouch-walk FBXs in the project for later audit instead of deleting source assets.

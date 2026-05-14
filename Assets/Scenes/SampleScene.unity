@@ -1120,7 +1120,7 @@ MonoBehaviour:
   airClipPromoted: 0
   landClipPromoted: 0
   crouchIdleClipPromoted: 1
-  crouchWalkClipPromoted: 1
+  crouchWalkClipPromoted: 0
   standToCrouchClipPromoted: 1
   standUpClipPromoted: 1
   allowCrouchAnimationClips: 1
