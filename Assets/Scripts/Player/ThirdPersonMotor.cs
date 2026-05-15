@@ -50,13 +50,14 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideDuration = 0.9f;
     [SerializeField] private float slideSteerStrength = 5f;
     [SerializeField] private float slideInputBufferTime = 0.1f;
-    [SerializeField] private float slideGroundStickForce = 8f;
+    [SerializeField] private float slideGroundStickForce = 18f;
     [SerializeField] private float slideExitSpeedCarry = 1.1f;
-    [SerializeField] private float slideStartGroundedStableTime = 0.06f;
-    [SerializeField] private float slideCrouchExitGroundStickTime = 0.18f;
+    [SerializeField] private float slideStartGroundedStableTime = 0.1f;
+    [SerializeField] private float slideCrouchExitGroundStickTime = 0.24f;
     [SerializeField] private float slideMaxUpwardExitVelocity = 0f;
     [SerializeField] private float slideExitJumpLockTime = 0.2f;
     [SerializeField] private float slideExitStandLockTime = 0.18f;
+    [SerializeField] private float slideStepOffset = 0f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementMode;
@@ -458,8 +459,9 @@ public class ThirdPersonMotor : MonoBehaviour
         currentAcceleration = (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f);
         horizontalVelocity = slideDirection * slideSpeed;
         moveDirection = slideDirection;
-        controller.Move(horizontalVelocity * deltaTime);
+        controller.stepOffset = Mathf.Min(controller.stepOffset, slideStepOffset);
         controller.Move(Vector3.down * (slideGroundStickForce * deltaTime));
+        controller.Move(horizontalVelocity * deltaTime);
 
         slideSpeed = Mathf.MoveTowards(slideSpeed, slideEndSpeed, (slideStartSpeed - slideEndSpeed) / Mathf.Max(slideDuration, 0.01f) * deltaTime);
     }
@@ -603,6 +605,8 @@ public class ThirdPersonMotor : MonoBehaviour
         slideTimer = slideDuration;
         slideSpeed = Mathf.Max(slideStartSpeed, horizontalVelocity.magnitude);
         slideDirection = moveDirection.sqrMagnitude > 0.001f ? moveDirection.normalized : transform.forward;
+        verticalVelocity.y = -Mathf.Max(slideGroundStickForce, 2f);
+        SnapControllerToCrouchShape();
         slideExitStickTimer = 0f;
         slideExitJumpLockTimer = 0f;
         slideExitStandLockTimer = 0f;
@@ -633,6 +637,20 @@ public class ThirdPersonMotor : MonoBehaviour
 
         slideSpeed = 0f;
         wantsToCrouch = enterCrouch;
+    }
+
+    private void SnapControllerToCrouchShape()
+    {
+        controller.height = crouchHeight;
+        controller.center = standingCenter + Vector3.up * ((crouchHeight - standingHeight) * 0.5f);
+        controller.stepOffset = slideStepOffset;
+
+        if (cameraTarget != null)
+        {
+            Vector3 targetCameraPosition = cameraTargetStandingLocalPosition;
+            targetCameraPosition.y = crouchCameraTargetY;
+            cameraTarget.localPosition = targetCameraPosition;
+        }
     }
 
     private void ToggleCrouch()

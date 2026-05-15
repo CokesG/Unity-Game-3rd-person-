@@ -27,6 +27,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
     [SerializeField] private bool sprintClipPromoted;
+    [SerializeField] private bool slideClipPromoted = true;
     [SerializeField] private bool aimStrafeClipPromoted;
     [SerializeField] private bool jumpClipPromoted;
     [SerializeField] private bool airClipPromoted;
@@ -97,6 +98,7 @@ public class PlayerAnimationController : MonoBehaviour
     private const string WalkState = "Base Layer.Walk";
     private const string RunState = "Base Layer.Run";
     private const string SprintState = "Base Layer.Sprint";
+    private const string SlideState = "Base Layer.Slide";
     private const string JumpState = "Base Layer.Jump Start";
     private const string AirState = "Base Layer.Falling / In Air";
     private const string LandingState = "Base Layer.Landing";
@@ -270,6 +272,10 @@ public class PlayerAnimationController : MonoBehaviour
         {
             targetState = JumpState;
         }
+        else if (currentIsSliding && slideClipPromoted)
+        {
+            targetState = SlideState;
+        }
         else if (landingStateTimer > 0f && landClipPromoted)
         {
             targetState = LandingState;
@@ -320,6 +326,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         bool isFastOneShot = targetState == JumpState
+            || targetState == SlideState
             || targetState == AirState
             || targetState == LandingState
             || targetState == StandToCrouchState
@@ -327,7 +334,9 @@ public class PlayerAnimationController : MonoBehaviour
         float fadeTime = isFastOneShot
             ? targetState == StandToCrouchState || targetState == StandUpState
                 ? crouchTransitionCrossFadeTime
-                : jumpCrossFadeTime
+                : targetState == SlideState
+                    ? crouchTransitionCrossFadeTime
+                    : jumpCrossFadeTime
             : targetState == CrouchWalkState || currentAnimatorStatePath == CrouchWalkState
                 ? crouchWalkCrossFadeTime
                 : locomotionCrossFadeTime;
@@ -550,8 +559,7 @@ public class PlayerAnimationController : MonoBehaviour
 
         bool shouldGroundVisual = currentIsGrounded
             && !currentIsJumping
-            && !currentIsFalling
-            && !currentIsSliding;
+            && !currentIsFalling;
 
         if (!shouldGroundVisual)
         {

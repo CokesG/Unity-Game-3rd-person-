@@ -204,6 +204,8 @@ Implemented:
 - Added slide exit reason and post-exit stick time to the F1 movement telemetry.
 - Added real-time reload countdown to the always-visible weapon readout, not only the expanded F1 overlay.
 - Added short post-slide jump and stand locks so slide-to-crouch cannot immediately fire a jump or stand transition while the capsule is still settling.
+- Hardened slide start by snapping the `CharacterController` immediately into the crouch capsule, forcing slide step offset to `0`, and applying downward stick before horizontal slide movement.
+- Routed live slide visuals to `Base Layer.Slide` with the existing `Nightfall_Slide` animation while keeping root motion off.
 
 Validation target:
 

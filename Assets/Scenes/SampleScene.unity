@@ -1115,6 +1115,7 @@ MonoBehaviour:
   walkClipPromoted: 1
   runClipPromoted: 1
   sprintClipPromoted: 0
+  slideClipPromoted: 1
   aimStrafeClipPromoted: 0
   jumpClipPromoted: 1
   airClipPromoted: 0
@@ -1204,8 +1205,14 @@ MonoBehaviour:
   slideDuration: 0.9
   slideSteerStrength: 5
   slideInputBufferTime: 0.1
-  slideGroundStickForce: 8
+  slideGroundStickForce: 18
   slideExitSpeedCarry: 1.1
+  slideStartGroundedStableTime: 0.1
+  slideCrouchExitGroundStickTime: 0.24
+  slideMaxUpwardExitVelocity: 0
+  slideExitJumpLockTime: 0.2
+  slideExitStandLockTime: 0.18
+  slideStepOffset: 0
   currentMovementMode: 
   debugIsCrouching: 0
   debugIsSliding: 0
