@@ -277,7 +277,7 @@ public class PlayerAnimationController : MonoBehaviour
     {
         string targetState;
 
-        if (currentIsSliding && slideClipPromoted)
+        if (currentIsSliding)
         {
             targetState = SlideState;
         }

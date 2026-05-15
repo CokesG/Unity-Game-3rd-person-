@@ -213,6 +213,8 @@ Implemented:
 - Smoothed post-slide crouch-to-stand by extending the stand unlock to `0.30s` and adding a `0.35s` post-slide crouch settle window that uses a `0.30s` stand-up crossfade. F1 now shows the animation `slideSettle` timer.
 - Restored slide visual priority so an active slide selects `Base Layer.Slide` before airborne/jump fallback states. This prevents a noisy grounded frame during slide start from hiding the slide animation.
 - Audited `User_Running_Slide` through Unity MCP frame renders and found it reads upright/run-like on the live rig, so the live `Slide` state now uses the stable held crouch pose as a safe visible low slide placeholder. Reduced `Stand Up` state speed from `4.6` to `3.4` and extended its live timer to `1.05s` to soften the crouch-to-stand rise.
+- Re-enabled `User_Running_Slide` on `Base Layer.Slide` for live visual review after confirming the placeholder made slide gameplay visible but hid the authored slide animation.
+- Removed the `slideClipPromoted` gate from live motor slide state selection. When `ThirdPersonMotor.IsSliding()` is true, `PlayerAnimationController` now enters `Base Layer.Slide` so stale Play Mode component flags cannot produce gameplay slide without the selected slide animation.
 
 Validation target:
 
