@@ -206,6 +206,7 @@ Implemented:
 - Added short post-slide jump and stand locks so slide-to-crouch cannot immediately fire a jump or stand transition while the capsule is still settling.
 - Hardened slide start by snapping the `CharacterController` immediately into the crouch capsule, forcing slide step offset to `0`, and applying downward stick before horizontal slide movement.
 - Routed live slide visuals to `Base Layer.Slide` with the existing `Nightfall_Slide` animation while keeping root motion off.
+- Corrected live slide to use the original baked `NightfallVanguard_Armature|slide_light` clip from `NightfallVanguard_Prototype_Animated.fbx` after the standalone slide anim failed to produce the intended low slide pose in play.
 
 Validation target:
 
