@@ -194,3 +194,16 @@ Implemented:
 - Disabled `crouchWalkClipPromoted` in `SampleScene` so moving while crouched returns to the stable held crouch pose.
 - Disabled default linked-sandbox crouch-walk directional review; `9 Crouched Walk` shows the safe crouch hold unless review is manually enabled.
 - Kept the authored crouch-walk FBXs in the project for later audit instead of deleting source assets.
+
+## 2026-05-14 - Slide/Crouch Stability And Debug Pass
+
+Implemented:
+
+- Added a short stable-ground requirement before slide start so the player cannot enter slide from a noisy grounded frame.
+- Added a post-slide crouch ground-stick timer to keep slide-to-crouch exits biased downward instead of popping upward.
+- Added slide exit reason and post-exit stick time to the F1 movement telemetry.
+- Added real-time reload countdown to the always-visible weapon readout, not only the expanded F1 overlay.
+
+Validation target:
+
+- In `SampleScene`, sprint-slide on flat ground and ramps, then let the slide decay into crouch. Expected: no upward launch, F1 shows `slideExit` as `timer`, `speed`, `aim cancel`, or `left ground`, and `exitStick` briefly counts down after crouch entry.

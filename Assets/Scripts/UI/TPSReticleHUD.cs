@@ -152,8 +152,9 @@ public class TPSReticleHUD : MonoBehaviour
         string ammo = $"{weaponController.CurrentAmmo}/{weaponController.MagazineSize}";
         string state = weaponController.WeaponState;
         string blocked = weaponController.MuzzleBlocked ? "BLOCKED" : "Clear";
+        string reload = weaponController.IsReloading ? $"Reload {weaponController.ReloadTimeRemaining:0.00}s" : "Ready";
 
-        GUI.Label(new Rect(24f, 24f, 420f, 24f), $"{movement} | {weapon} | {ammo} | {state} | {blocked}");
+        GUI.Label(new Rect(24f, 24f, 560f, 24f), $"{movement} | {weapon} | {ammo} | {state} | {reload} | {blocked}");
     }
 
     private void DrawMetricsOverlay()
@@ -290,7 +291,14 @@ public class TPSReticleHUD : MonoBehaviour
             .Append(" | stable ").Append(motor.GetGroundedStableTime().ToString("0.00"))
             .Append(" | lock ").Append(motor.IsJumpLockedUntilGrounded() ? "yes" : "no")
             .Append(" | slideSpd ").Append(motor.GetSlideSpeed().ToString("0.00"))
+            .Append(" | exitStick ").Append(motor.GetSlideExitStickTimeRemaining().ToString("0.00"))
             .Append(" | leftGround ").Append(motor.HasLeftGroundSinceJump() ? "yes" : "no");
+
+        string slideExit = motor.GetSlideExitReason();
+        if (!string.IsNullOrEmpty(slideExit))
+        {
+            debugBuilder.Append(" | slideExit ").Append(slideExit);
+        }
 
         string standBlocker = motor.GetStandBlocker();
         if (!string.IsNullOrEmpty(standBlocker))

@@ -52,6 +52,9 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideInputBufferTime = 0.1f;
     [SerializeField] private float slideGroundStickForce = 8f;
     [SerializeField] private float slideExitSpeedCarry = 1.1f;
+    [SerializeField] private float slideStartGroundedStableTime = 0.06f;
+    [SerializeField] private float slideCrouchExitGroundStickTime = 0.18f;
+    [SerializeField] private float slideMaxUpwardExitVelocity = 0f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementMode;
@@ -74,6 +77,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float debugCapsuleHeight;
     [SerializeField] private Vector3 debugCameraTargetLocalPosition;
     [SerializeField] private string debugStandBlocker;
+    [SerializeField] private string debugSlideExitReason;
+    [SerializeField] private float debugSlideExitStickTimer;
 
     private CharacterController controller;
     private PlayerInputHandler input;
@@ -110,6 +115,7 @@ public class ThirdPersonMotor : MonoBehaviour
     private float jumpBufferTimer;
     private float slideBufferTimer;
     private float groundedStableTimer;
+    private float slideExitStickTimer;
     private readonly Collider[] groundOverlapHits = new Collider[8];
 
     private void Awake()
@@ -274,9 +280,21 @@ public class ThirdPersonMotor : MonoBehaviour
         if (isSliding)
         {
             slideTimer -= Time.deltaTime;
-            if (!isGrounded || input.AimPressed || slideTimer <= 0f || slideSpeed <= slideEndSpeed + 0.05f)
+            if (!isGrounded)
             {
-                EndSlide(true);
+                EndSlide(true, "left ground");
+            }
+            else if (input.AimPressed)
+            {
+                EndSlide(true, "aim cancel");
+            }
+            else if (slideTimer <= 0f)
+            {
+                EndSlide(true, "timer");
+            }
+            else if (slideSpeed <= slideEndSpeed + 0.05f)
+            {
+                EndSlide(true, "speed");
             }
         }
 
@@ -479,6 +497,12 @@ public class ThirdPersonMotor : MonoBehaviour
         verticalVelocity.y += gravity * gravityMultiplier * deltaTime;
         verticalVelocity.y = Mathf.Max(verticalVelocity.y, maxFallSpeed);
         controller.Move(verticalVelocity * deltaTime);
+
+        if (slideExitStickTimer > 0f && wantsToCrouch && !isSliding)
+        {
+            controller.Move(Vector3.down * (slideGroundStickForce * deltaTime));
+            slideExitStickTimer = Mathf.Max(0f, slideExitStickTimer - deltaTime);
+        }
     }
 
     private void TryConsumeBufferedJump()
@@ -490,7 +514,7 @@ public class ThirdPersonMotor : MonoBehaviour
 
         if (isSliding)
         {
-            EndSlide(false);
+            EndSlide(false, "jump");
         }
         else if (wantsToCrouch)
         {
@@ -554,6 +578,7 @@ public class ThirdPersonMotor : MonoBehaviour
         return isGrounded
             && !isSliding
             && sprintIntent
+            && groundedStableTimer >= slideStartGroundedStableTime
             && horizontalVelocity.magnitude > runSpeed * 0.75f;
     }
 
@@ -564,20 +589,26 @@ public class ThirdPersonMotor : MonoBehaviour
         slideTimer = slideDuration;
         slideSpeed = Mathf.Max(slideStartSpeed, horizontalVelocity.magnitude);
         slideDirection = moveDirection.sqrMagnitude > 0.001f ? moveDirection.normalized : transform.forward;
+        slideExitStickTimer = 0f;
+        debugSlideExitReason = string.Empty;
     }
 
-    private void EndSlide(bool enterCrouch)
+    private void EndSlide(bool enterCrouch, string reason)
     {
         isSliding = false;
         slideTimer = 0f;
+        debugSlideExitReason = reason;
         if (enterCrouch)
         {
             float carrySpeed = Mathf.Min(horizontalVelocity.magnitude, Mathf.Max(crouchSpeed * slideExitSpeedCarry, crouchSpeed));
             horizontalVelocity = slideDirection.sqrMagnitude > 0.001f ? slideDirection.normalized * carrySpeed : Vector3.zero;
-            if (verticalVelocity.y > -2f)
-            {
-                verticalVelocity.y = -2f;
-            }
+            verticalVelocity.y = Mathf.Min(verticalVelocity.y, slideMaxUpwardExitVelocity);
+            if (verticalVelocity.y > -2f) verticalVelocity.y = -2f;
+            slideExitStickTimer = slideCrouchExitGroundStickTime;
+        }
+        else
+        {
+            slideExitStickTimer = 0f;
         }
 
         slideSpeed = 0f;
@@ -670,6 +701,7 @@ public class ThirdPersonMotor : MonoBehaviour
         debugHorizontalVelocity = horizontalVelocity;
         debugCapsuleHeight = controller.height;
         debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;
+        debugSlideExitStickTimer = slideExitStickTimer;
         if (!wantsToCrouch)
         {
             debugStandBlocker = string.Empty;
@@ -710,6 +742,8 @@ public class ThirdPersonMotor : MonoBehaviour
     public bool HasLeftGroundSinceJump() => hasLeftGroundSinceJump;
     public float GetSlideSpeed() => slideSpeed;
     public string GetStandBlocker() => debugStandBlocker;
+    public string GetSlideExitReason() => debugSlideExitReason;
+    public float GetSlideExitStickTimeRemaining() => slideExitStickTimer;
 
     private void OnDrawGizmosSelected()
     {
