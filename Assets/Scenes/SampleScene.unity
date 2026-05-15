@@ -1132,7 +1132,7 @@ MonoBehaviour:
   forceCrouchWalkWhenMoving: 0
   landingStateDuration: 0.1
   standToCrouchStateDuration: 0.85
-  standUpStateDuration: 0.85
+  standUpStateDuration: 1.05
   crouchIdleHoldNormalizedTime: 0.95
   groundVisualWhenGrounded: 1
   preferFootBoneGrounding: 1

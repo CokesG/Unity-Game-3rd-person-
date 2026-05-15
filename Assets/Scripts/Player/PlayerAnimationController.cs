@@ -557,7 +557,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
         else
         {
-            animator.CrossFadeInFixedTime(stateName, fadeTime, 0, 0f);
+            animator.CrossFadeInFixedTime(targetStateHash, fadeTime, 0, 0f);
         }
 
         currentAnimatorStatePath = stateName;
