@@ -210,6 +210,7 @@ Implemented:
 - Quarantined slide visuals after the original baked slide clip also produced a broken airborne/arms-up pose on the current full-quality rig. Keep slide gameplay active, but leave `slideClipPromoted` off until a fresh rig-compatible slide animation is imported and audited.
 - Imported the fresh user-provided `Running Slide.fbx` as `Assets/Animations/NightfallVanguard/UserSlide/User_Running_Slide.fbx`, pointed `Base Layer.Slide` at `User_Running_Slide`, and re-enabled `slideClipPromoted` in `SampleScene` for live review.
 - Smoothed slide animation transitions by adding dedicated slide enter and slide-to-crouch crossfade timings. `Slide -> Crouch Idle` now crossfades into the held crouch pose instead of using the hard crouch-idle `Play()` path.
+- Smoothed post-slide crouch-to-stand by extending the stand unlock to `0.30s` and adding a `0.35s` post-slide crouch settle window that uses a `0.30s` stand-up crossfade. F1 now shows the animation `slideSettle` timer.
 
 Validation target:
 

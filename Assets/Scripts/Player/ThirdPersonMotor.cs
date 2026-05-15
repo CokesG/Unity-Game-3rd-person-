@@ -56,7 +56,7 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideCrouchExitGroundStickTime = 0.24f;
     [SerializeField] private float slideMaxUpwardExitVelocity = 0f;
     [SerializeField] private float slideExitJumpLockTime = 0.2f;
-    [SerializeField] private float slideExitStandLockTime = 0.18f;
+    [SerializeField] private float slideExitStandLockTime = 0.3f;
     [SerializeField] private float slideStepOffset = 0f;
 
     [Header("Debug Readout")]

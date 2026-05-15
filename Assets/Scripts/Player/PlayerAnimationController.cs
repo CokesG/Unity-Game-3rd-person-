@@ -25,6 +25,8 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float crouchTransitionCrossFadeTime = 0.16f;
     [SerializeField] private float slideEnterCrossFadeTime = 0.08f;
     [SerializeField] private float slideExitToCrouchCrossFadeTime = 0.22f;
+    [SerializeField] private float slideExitToStandCrossFadeTime = 0.3f;
+    [SerializeField] private float slideExitCrouchSettleDuration = 0.35f;
     [SerializeField] private bool driveAnimatorStateMachine;
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
@@ -123,8 +125,10 @@ public class PlayerAnimationController : MonoBehaviour
     private float standToCrouchStateTimer;
     private float standUpStateTimer;
     private bool wasCrouchingLastFrame;
+    private bool wasSlidingLastFrame;
     private bool wantsCrouchWalkVisual;
     private int currentAnimatorStateHash;
+    private float slideExitCrouchSettleTimer;
     private Vector3 visualBaseLocalPosition;
     private Renderer[] visualRenderers;
     private bool hasVisualBaseLocalPosition;
@@ -201,6 +205,7 @@ public class PlayerAnimationController : MonoBehaviour
         currentMovementY = movementBlend.y;
         currentUsesRunVisual = ShouldUseRunState();
         UpdateLandingStateTimer();
+        UpdateSlideExitCrouchSettleTimer();
         UpdateCrouchTransitionStateTimers();
         UpdateCrouchWalkVisualState();
         currentUsesCrouchWalkVisual = wantsCrouchWalkVisual;
@@ -248,6 +253,7 @@ public class PlayerAnimationController : MonoBehaviour
         }
 
         wasCrouchingLastFrame = currentIsCrouching;
+        wasSlidingLastFrame = currentIsSliding;
         ApplyCrouchVisualGrounding();
     }
 
@@ -263,6 +269,7 @@ public class PlayerAnimationController : MonoBehaviour
     public bool CurrentUsesRunVisual => currentUsesRunVisual;
     public bool AimStrafeClipPromoted => aimStrafeClipPromoted;
     public float CurrentCrouchTransitionStateTime => currentCrouchTransitionStateTime;
+    public float SlideExitCrouchSettleTime => slideExitCrouchSettleTimer;
     public float CurrentVisualGroundOffset => currentVisualGroundOffset;
     public string CurrentAnimatorStatePath => currentAnimatorStatePath;
 
@@ -342,6 +349,11 @@ public class PlayerAnimationController : MonoBehaviour
             return slideExitToCrouchCrossFadeTime;
         }
 
+        if (slideExitCrouchSettleTimer > 0f && targetState == StandUpState)
+        {
+            return slideExitToStandCrossFadeTime;
+        }
+
         if (targetState == StandToCrouchState || targetState == StandUpState)
         {
             return crouchTransitionCrossFadeTime;
@@ -371,6 +383,20 @@ public class PlayerAnimationController : MonoBehaviour
         if (landingStateTimer > 0f)
         {
             landingStateTimer = Mathf.Max(0f, landingStateTimer - Time.deltaTime);
+        }
+    }
+
+    private void UpdateSlideExitCrouchSettleTimer()
+    {
+        if (!currentIsSliding && wasSlidingLastFrame && currentIsCrouching)
+        {
+            slideExitCrouchSettleTimer = slideExitCrouchSettleDuration;
+            return;
+        }
+
+        if (slideExitCrouchSettleTimer > 0f)
+        {
+            slideExitCrouchSettleTimer = Mathf.Max(0f, slideExitCrouchSettleTimer - Time.deltaTime);
         }
     }
 

@@ -1113,6 +1113,8 @@ MonoBehaviour:
   crouchTransitionCrossFadeTime: 0.16
   slideEnterCrossFadeTime: 0.08
   slideExitToCrouchCrossFadeTime: 0.22
+  slideExitToStandCrossFadeTime: 0.3
+  slideExitCrouchSettleDuration: 0.35
   driveAnimatorStateMachine: 1
   walkClipPromoted: 1
   runClipPromoted: 1
@@ -1213,7 +1215,7 @@ MonoBehaviour:
   slideCrouchExitGroundStickTime: 0.24
   slideMaxUpwardExitVelocity: 0
   slideExitJumpLockTime: 0.2
-  slideExitStandLockTime: 0.18
+  slideExitStandLockTime: 0.3
   slideStepOffset: 0
   currentMovementMode: 
   debugIsCrouching: 0

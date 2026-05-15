@@ -343,6 +343,7 @@ public class TPSReticleHUD : MonoBehaviour
             .AppendLine();
 
         debugBuilder.Append("Anim timers: crouchTrans ").Append(animationController.CurrentCrouchTransitionStateTime.ToString("0.00"))
+            .Append(" | slideSettle ").Append(animationController.SlideExitCrouchSettleTime.ToString("0.00"))
             .Append(" | visualGround ").Append(animationController.CurrentVisualGroundOffset.ToString("0.000"))
             .Append(" | crouchStable ").Append(weaponController.IsCrouchStabilized ? "yes" : "no")
             .Append(" | aimStrafe ").Append(animationController.AimStrafeClipPromoted ? "live" : "blocked")
