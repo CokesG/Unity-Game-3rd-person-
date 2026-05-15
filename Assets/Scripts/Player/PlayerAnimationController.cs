@@ -23,6 +23,8 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private float crouchWalkEnterSpeed = 0.12f;
     [SerializeField] private float crouchWalkExitSpeed = 0.04f;
     [SerializeField] private float crouchTransitionCrossFadeTime = 0.16f;
+    [SerializeField] private float slideEnterCrossFadeTime = 0.08f;
+    [SerializeField] private float slideExitToCrouchCrossFadeTime = 0.22f;
     [SerializeField] private bool driveAnimatorStateMachine;
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
@@ -325,22 +327,37 @@ public class PlayerAnimationController : MonoBehaviour
             targetState = IdleState;
         }
 
-        bool isFastOneShot = targetState == JumpState
-            || targetState == SlideState
-            || targetState == AirState
-            || targetState == LandingState
-            || targetState == StandToCrouchState
-            || targetState == StandUpState;
-        float fadeTime = isFastOneShot
-            ? targetState == StandToCrouchState || targetState == StandUpState
-                ? crouchTransitionCrossFadeTime
-                : targetState == SlideState
-                    ? crouchTransitionCrossFadeTime
-                    : jumpCrossFadeTime
-            : targetState == CrouchWalkState || currentAnimatorStatePath == CrouchWalkState
-                ? crouchWalkCrossFadeTime
-                : locomotionCrossFadeTime;
-        CrossFadeIfNeeded(targetState, fadeTime);
+        CrossFadeIfNeeded(targetState, ResolveCrossFadeTime(targetState));
+    }
+
+    private float ResolveCrossFadeTime(string targetState)
+    {
+        if (targetState == SlideState)
+        {
+            return slideEnterCrossFadeTime;
+        }
+
+        if (currentAnimatorStatePath == SlideState && targetState == CrouchIdleState)
+        {
+            return slideExitToCrouchCrossFadeTime;
+        }
+
+        if (targetState == StandToCrouchState || targetState == StandUpState)
+        {
+            return crouchTransitionCrossFadeTime;
+        }
+
+        if (targetState == JumpState || targetState == AirState || targetState == LandingState)
+        {
+            return jumpCrossFadeTime;
+        }
+
+        if (targetState == CrouchWalkState || currentAnimatorStatePath == CrouchWalkState)
+        {
+            return crouchWalkCrossFadeTime;
+        }
+
+        return locomotionCrossFadeTime;
     }
 
     private void UpdateLandingStateTimer()
@@ -502,7 +519,7 @@ public class PlayerAnimationController : MonoBehaviour
 
         if (stateName == CrouchIdleState)
         {
-            if (currentAnimatorStatePath == CrouchWalkState)
+            if (currentAnimatorStatePath == CrouchWalkState || currentAnimatorStatePath == SlideState)
             {
                 animator.CrossFade(targetStateHash, Mathf.Max(0.01f, fadeTime), 0, crouchIdleHoldNormalizedTime);
             }

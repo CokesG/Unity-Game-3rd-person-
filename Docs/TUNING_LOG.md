@@ -209,6 +209,7 @@ Implemented:
 - Corrected live slide to use the original baked `NightfallVanguard_Armature|slide_light` clip from `NightfallVanguard_Prototype_Animated.fbx` after the standalone slide anim failed to produce the intended low slide pose in play.
 - Quarantined slide visuals after the original baked slide clip also produced a broken airborne/arms-up pose on the current full-quality rig. Keep slide gameplay active, but leave `slideClipPromoted` off until a fresh rig-compatible slide animation is imported and audited.
 - Imported the fresh user-provided `Running Slide.fbx` as `Assets/Animations/NightfallVanguard/UserSlide/User_Running_Slide.fbx`, pointed `Base Layer.Slide` at `User_Running_Slide`, and re-enabled `slideClipPromoted` in `SampleScene` for live review.
+- Smoothed slide animation transitions by adding dedicated slide enter and slide-to-crouch crossfade timings. `Slide -> Crouch Idle` now crossfades into the held crouch pose instead of using the hard crouch-idle `Play()` path.
 
 Validation target:
 

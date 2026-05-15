@@ -1111,6 +1111,8 @@ MonoBehaviour:
   crouchWalkEnterSpeed: 0.12
   crouchWalkExitSpeed: 0.04
   crouchTransitionCrossFadeTime: 0.16
+  slideEnterCrossFadeTime: 0.08
+  slideExitToCrouchCrossFadeTime: 0.22
   driveAnimatorStateMachine: 1
   walkClipPromoted: 1
   runClipPromoted: 1
