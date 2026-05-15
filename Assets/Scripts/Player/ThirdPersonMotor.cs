@@ -55,6 +55,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private float slideStartGroundedStableTime = 0.06f;
     [SerializeField] private float slideCrouchExitGroundStickTime = 0.18f;
     [SerializeField] private float slideMaxUpwardExitVelocity = 0f;
+    [SerializeField] private float slideExitJumpLockTime = 0.2f;
+    [SerializeField] private float slideExitStandLockTime = 0.18f;
 
     [Header("Debug Readout")]
     [SerializeField] private string currentMovementMode;
@@ -79,6 +81,8 @@ public class ThirdPersonMotor : MonoBehaviour
     [SerializeField] private string debugStandBlocker;
     [SerializeField] private string debugSlideExitReason;
     [SerializeField] private float debugSlideExitStickTimer;
+    [SerializeField] private float debugSlideExitJumpLockTimer;
+    [SerializeField] private float debugSlideExitStandLockTimer;
 
     private CharacterController controller;
     private PlayerInputHandler input;
@@ -116,6 +120,8 @@ public class ThirdPersonMotor : MonoBehaviour
     private float slideBufferTimer;
     private float groundedStableTimer;
     private float slideExitStickTimer;
+    private float slideExitJumpLockTimer;
+    private float slideExitStandLockTimer;
     private readonly Collider[] groundOverlapHits = new Collider[8];
 
     private void Awake()
@@ -147,6 +153,7 @@ public class ThirdPersonMotor : MonoBehaviour
         CacheMainCamera();
         CheckGrounded();
         TrackBufferedInputs(Time.deltaTime);
+        TickSlideExitLocks(Time.deltaTime);
         HandleCrouchAndSlideInput();
         UpdateCrouchShape(Time.deltaTime);
         HandleMovement(Time.deltaTime);
@@ -273,6 +280,12 @@ public class ThirdPersonMotor : MonoBehaviour
         {
             slideBufferTimer = Mathf.Max(0f, slideBufferTimer - deltaTime);
         }
+    }
+
+    private void TickSlideExitLocks(float deltaTime)
+    {
+        slideExitJumpLockTimer = Mathf.Max(0f, slideExitJumpLockTimer - deltaTime);
+        slideExitStandLockTimer = Mathf.Max(0f, slideExitStandLockTimer - deltaTime);
     }
 
     private void HandleCrouchAndSlideInput()
@@ -543,6 +556,7 @@ public class ThirdPersonMotor : MonoBehaviour
         return (isGrounded || coyoteTimer > 0f)
             && !hasJumpedSinceGrounded
             && !jumpLockedUntilGrounded
+            && slideExitJumpLockTimer <= 0f
             && verticalVelocity.y <= 0.05f
             && Time.time - lastJumpTime >= minJumpInterval;
     }
@@ -590,6 +604,8 @@ public class ThirdPersonMotor : MonoBehaviour
         slideSpeed = Mathf.Max(slideStartSpeed, horizontalVelocity.magnitude);
         slideDirection = moveDirection.sqrMagnitude > 0.001f ? moveDirection.normalized : transform.forward;
         slideExitStickTimer = 0f;
+        slideExitJumpLockTimer = 0f;
+        slideExitStandLockTimer = 0f;
         debugSlideExitReason = string.Empty;
     }
 
@@ -605,10 +621,14 @@ public class ThirdPersonMotor : MonoBehaviour
             verticalVelocity.y = Mathf.Min(verticalVelocity.y, slideMaxUpwardExitVelocity);
             if (verticalVelocity.y > -2f) verticalVelocity.y = -2f;
             slideExitStickTimer = slideCrouchExitGroundStickTime;
+            slideExitJumpLockTimer = slideExitJumpLockTime;
+            slideExitStandLockTimer = slideExitStandLockTime;
         }
         else
         {
             slideExitStickTimer = 0f;
+            slideExitJumpLockTimer = 0f;
+            slideExitStandLockTimer = 0f;
         }
 
         slideSpeed = 0f;
@@ -629,6 +649,12 @@ public class ThirdPersonMotor : MonoBehaviour
 
     private void TryStand()
     {
+        if (slideExitStandLockTimer > 0f)
+        {
+            debugStandBlocker = "slide exit settle";
+            return;
+        }
+
         if (CanStand())
         {
             wantsToCrouch = false;
@@ -702,6 +728,8 @@ public class ThirdPersonMotor : MonoBehaviour
         debugCapsuleHeight = controller.height;
         debugCameraTargetLocalPosition = cameraTarget != null ? cameraTarget.localPosition : Vector3.zero;
         debugSlideExitStickTimer = slideExitStickTimer;
+        debugSlideExitJumpLockTimer = slideExitJumpLockTimer;
+        debugSlideExitStandLockTimer = slideExitStandLockTimer;
         if (!wantsToCrouch)
         {
             debugStandBlocker = string.Empty;
@@ -744,6 +772,8 @@ public class ThirdPersonMotor : MonoBehaviour
     public string GetStandBlocker() => debugStandBlocker;
     public string GetSlideExitReason() => debugSlideExitReason;
     public float GetSlideExitStickTimeRemaining() => slideExitStickTimer;
+    public float GetSlideExitJumpLockTimeRemaining() => slideExitJumpLockTimer;
+    public float GetSlideExitStandLockTimeRemaining() => slideExitStandLockTimer;
 
     private void OnDrawGizmosSelected()
     {

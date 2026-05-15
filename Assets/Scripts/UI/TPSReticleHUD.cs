@@ -291,7 +291,9 @@ public class TPSReticleHUD : MonoBehaviour
             .Append(" | stable ").Append(motor.GetGroundedStableTime().ToString("0.00"))
             .Append(" | lock ").Append(motor.IsJumpLockedUntilGrounded() ? "yes" : "no")
             .Append(" | slideSpd ").Append(motor.GetSlideSpeed().ToString("0.00"))
-            .Append(" | exitStick ").Append(motor.GetSlideExitStickTimeRemaining().ToString("0.00"))
+            .Append(" | settle stick/jump/stand ").Append(motor.GetSlideExitStickTimeRemaining().ToString("0.00"))
+            .Append('/').Append(motor.GetSlideExitJumpLockTimeRemaining().ToString("0.00"))
+            .Append('/').Append(motor.GetSlideExitStandLockTimeRemaining().ToString("0.00"))
             .Append(" | leftGround ").Append(motor.HasLeftGroundSinceJump() ? "yes" : "no");
 
         string slideExit = motor.GetSlideExitReason();

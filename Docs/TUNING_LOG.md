@@ -203,7 +203,8 @@ Implemented:
 - Added a post-slide crouch ground-stick timer to keep slide-to-crouch exits biased downward instead of popping upward.
 - Added slide exit reason and post-exit stick time to the F1 movement telemetry.
 - Added real-time reload countdown to the always-visible weapon readout, not only the expanded F1 overlay.
+- Added short post-slide jump and stand locks so slide-to-crouch cannot immediately fire a jump or stand transition while the capsule is still settling.
 
 Validation target:
 
-- In `SampleScene`, sprint-slide on flat ground and ramps, then let the slide decay into crouch. Expected: no upward launch, F1 shows `slideExit` as `timer`, `speed`, `aim cancel`, or `left ground`, and `exitStick` briefly counts down after crouch entry.
+- In `SampleScene`, sprint-slide on flat ground and ramps, then let the slide decay into crouch. Expected: no upward launch, F1 shows `slideExit` as `timer`, `speed`, `aim cancel`, or `left ground`, and `settle stick/jump/stand` briefly counts down after crouch entry.
