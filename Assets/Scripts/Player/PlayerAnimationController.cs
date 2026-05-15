@@ -27,7 +27,7 @@ public class PlayerAnimationController : MonoBehaviour
     [SerializeField] private bool walkClipPromoted = true;
     [SerializeField] private bool runClipPromoted;
     [SerializeField] private bool sprintClipPromoted;
-    [SerializeField] private bool slideClipPromoted = true;
+    [SerializeField] private bool slideClipPromoted;
     [SerializeField] private bool aimStrafeClipPromoted;
     [SerializeField] private bool jumpClipPromoted;
     [SerializeField] private bool airClipPromoted;
