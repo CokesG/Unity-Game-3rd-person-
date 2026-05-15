@@ -1115,7 +1115,7 @@ MonoBehaviour:
   walkClipPromoted: 1
   runClipPromoted: 1
   sprintClipPromoted: 0
-  slideClipPromoted: 0
+  slideClipPromoted: 1
   aimStrafeClipPromoted: 0
   jumpClipPromoted: 1
   airClipPromoted: 0
