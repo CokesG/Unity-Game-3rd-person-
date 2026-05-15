@@ -211,6 +211,7 @@ Implemented:
 - Imported the fresh user-provided `Running Slide.fbx` as `Assets/Animations/NightfallVanguard/UserSlide/User_Running_Slide.fbx`, pointed `Base Layer.Slide` at `User_Running_Slide`, and re-enabled `slideClipPromoted` in `SampleScene` for live review.
 - Smoothed slide animation transitions by adding dedicated slide enter and slide-to-crouch crossfade timings. `Slide -> Crouch Idle` now crossfades into the held crouch pose instead of using the hard crouch-idle `Play()` path.
 - Smoothed post-slide crouch-to-stand by extending the stand unlock to `0.30s` and adding a `0.35s` post-slide crouch settle window that uses a `0.30s` stand-up crossfade. F1 now shows the animation `slideSettle` timer.
+- Restored slide visual priority so an active slide selects `Base Layer.Slide` before airborne/jump fallback states. This prevents a noisy grounded frame during slide start from hiding the slide animation.
 
 Validation target:
 

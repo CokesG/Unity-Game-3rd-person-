@@ -277,13 +277,13 @@ public class PlayerAnimationController : MonoBehaviour
     {
         string targetState;
 
-        if (!currentIsGrounded && jumpClipPromoted)
-        {
-            targetState = JumpState;
-        }
-        else if (currentIsSliding && slideClipPromoted)
+        if (currentIsSliding && slideClipPromoted)
         {
             targetState = SlideState;
+        }
+        else if (!currentIsGrounded && jumpClipPromoted)
+        {
+            targetState = JumpState;
         }
         else if (landingStateTimer > 0f && landClipPromoted)
         {
