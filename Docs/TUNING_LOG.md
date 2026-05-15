@@ -219,3 +219,12 @@ Implemented:
 Validation target:
 
 - In `SampleScene`, sprint-slide on flat ground and ramps, then let the slide decay into crouch. Expected: no upward launch, F1 shows `slideExit` as `timer`, `speed`, `aim cancel`, or `left ground`, and `settle stick/jump/stand` briefly counts down after crouch entry.
+
+## 2026-05-15 - Player Settings And Reticle Pass
+
+Implemented:
+
+- Added an Esc settings panel through `TPSReticleHUD` that unlocks the cursor while open and relocks it when closed.
+- Replaced the old hot camera sensitivity defaults with normal shooter-style sliders: Sensitivity, ADS Sens, and Vertical. The hidden look math uses a Source/Apex-like `0.022` degrees-per-pixel scalar so players do not need to edit DPI or cm/360 values.
+- Added persistent reticle customization for crosshair, dot, circle, and circle+dot styles with color presets, size, gap, thickness, and outline controls. Dot and circle reticles use generated circle/ring textures for cleaner shapes.
+- Updated the live scene camera sensitivity multipliers to `1` so the calibrated settings own the actual look rate.

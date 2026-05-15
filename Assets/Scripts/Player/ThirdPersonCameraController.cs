@@ -16,8 +16,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     [SerializeField] private bool allowShoulderSwap = true;
 
     [Header("Look Settings")]
-    [SerializeField] private float sensitivityX = 28f;
-    [SerializeField] private float sensitivityY = 18f;
+    [SerializeField] private float sensitivityX = 1f;
+    [SerializeField] private float sensitivityY = 1f;
     [SerializeField] private float minPitch = -28f;
     [SerializeField] private float maxPitch = 55f;
 
@@ -84,6 +84,8 @@ public class ThirdPersonCameraController : MonoBehaviour
     public Camera ControlledCamera => controlledCamera;
     public float CurrentRecoilPitch => recoilPitch;
     public float CurrentRecoilYaw => recoilYaw;
+    public float CurrentHipDegreesPerPixel => TpsPlayerSettings.HipDegreesPerPixel * sensitivityX;
+    public float CurrentAimDegreesPerPixel => TpsPlayerSettings.AimDegreesPerPixel * sensitivityX;
 
     private void Start()
     {
@@ -119,8 +121,7 @@ public class ThirdPersonCameraController : MonoBehaviour
         if (currentPitch > 180f) currentPitch -= 360f;
         currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        ApplyCursorMode();
     }
 
     private void LateUpdate()
@@ -136,9 +137,15 @@ public class ThirdPersonCameraController : MonoBehaviour
     private void HandleInput(float deltaTime)
     {
         Vector2 lookInput = input.LookInput;
+        ApplyCursorMode();
+        if (TpsPlayerSettings.SettingsOpen)
+        {
+            return;
+        }
 
-        currentYaw += lookInput.x * sensitivityX * deltaTime;
-        currentPitch -= lookInput.y * sensitivityY * deltaTime;
+        float degreesPerPixel = input.AimPressed ? TpsPlayerSettings.AimDegreesPerPixel : TpsPlayerSettings.HipDegreesPerPixel;
+        currentYaw += lookInput.x * degreesPerPixel * sensitivityX;
+        currentPitch -= lookInput.y * degreesPerPixel * TpsPlayerSettings.VerticalRatio * sensitivityY;
         currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
 
         if (allowShoulderSwap && input.ShoulderSwapTriggered)
@@ -149,6 +156,12 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         recoilPitch = Mathf.MoveTowards(recoilPitch, 0f, recoilReturnSpeed * deltaTime);
         recoilYaw = Mathf.MoveTowards(recoilYaw, 0f, recoilReturnSpeed * deltaTime);
+    }
+
+    private void ApplyCursorMode()
+    {
+        Cursor.lockState = TpsPlayerSettings.SettingsOpen ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = TpsPlayerSettings.SettingsOpen;
     }
 
     private void CalculatePositionAndRotation(float deltaTime)

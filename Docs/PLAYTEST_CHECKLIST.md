@@ -1,6 +1,6 @@
 # Playtest Checklist
 
-Last updated: 2026-05-12
+Last updated: 2026-05-15
 
 ## Setup
 
@@ -35,11 +35,15 @@ Full test gym:
 
 ## Camera
 
+- Esc opens/closes settings and unlocks/locks the cursor.
+- Mouse sensitivity feels controllable at the default `1.5` baseline.
+- Sensitivity, ADS Sens, and Vertical changes apply immediately.
 - Exploration view frames the character from behind/shoulder.
 - Aim view tightens without hiding the target.
 - Shoulder swap works.
 - Camera collision does not pop violently.
 - Reticle remains readable during sprint, slide, and aim.
+- Reticle shape, size, gap, thickness, outline, and color changes are visible immediately.
 - Recoil returns to center.
 
 ## Rifle

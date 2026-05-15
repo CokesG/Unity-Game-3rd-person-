@@ -20,6 +20,11 @@ public class TPSReticleHUD : MonoBehaviour
     [SerializeField] private float targetRefreshInterval = 0.25f;
     [SerializeField] private int maxTargetsShown = 4;
 
+    private const float SettingsPanelWidth = 460f;
+    private const float SettingsPanelHeight = 500f;
+    private static Texture2D circleTexture;
+    private static Texture2D ringTexture;
+    private Vector2 settingsScroll;
     private float hitmarkerTimer;
     private float hitDamage;
     private bool hitConfirmed;
@@ -73,6 +78,11 @@ public class TPSReticleHUD : MonoBehaviour
             showMetricsOverlay = !showMetricsOverlay;
         }
 
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            TpsPlayerSettings.SettingsOpen = !TpsPlayerSettings.SettingsOpen;
+        }
+
         if (Time.time >= nextTargetRefreshTime)
         {
             targetDummies = FindObjectsByType<TargetDummy>(FindObjectsInactive.Exclude);
@@ -86,26 +96,124 @@ public class TPSReticleHUD : MonoBehaviour
         DrawHitmarker();
         DrawWeaponReadout();
         DrawMetricsOverlay();
+        DrawSettingsPanel();
     }
 
     private void DrawCrosshair()
     {
+        if (TpsPlayerSettings.SettingsOpen)
+        {
+            return;
+        }
+
         float cx = Screen.width * 0.5f;
         float cy = Screen.height * 0.5f;
         float spread = weaponController != null ? weaponController.CurrentSpreadDegrees : 0.5f;
-        float gap = Mathf.Clamp(minCrosshairGap + spread * spreadPixelMultiplier, minCrosshairGap, maxCrosshairGap);
-        float length = 6f;
-        float thickness = 1.5f;
+        float baseGap = TpsPlayerSettings.ReticleGap;
+        float gap = Mathf.Clamp(baseGap + spread * spreadPixelMultiplier, baseGap, maxCrosshairGap);
+        float length = TpsPlayerSettings.ReticleSize;
+        float thickness = TpsPlayerSettings.ReticleThickness;
         bool blocked = cameraController != null && cameraController.IsMuzzleBlocked;
-        Color color = blocked ? new Color(1f, 0.25f, 0.2f, 0.95f) : new Color(1f, 1f, 1f, 0.9f);
+        Color color = blocked ? new Color(1f, 0.25f, 0.2f, 0.95f) : TpsPlayerSettings.ReticleColor;
 
         Color oldColor = GUI.color;
+        DrawReticleShape(cx, cy, gap, length, thickness, color);
+        GUI.color = oldColor;
+    }
+
+    private void DrawReticleShape(float cx, float cy, float gap, float size, float thickness, Color color)
+    {
+        if (TpsPlayerSettings.ReticleOutline)
+        {
+            Color outline = new Color(0f, 0f, 0f, Mathf.Clamp01(color.a * 0.75f));
+            DrawReticleShapeRaw(cx, cy, gap, size, thickness + 2f, outline);
+        }
+
+        DrawReticleShapeRaw(cx, cy, gap, size, thickness, color);
+    }
+
+    private void DrawReticleShapeRaw(float cx, float cy, float gap, float size, float thickness, Color color)
+    {
+        Color previous = GUI.color;
         GUI.color = color;
+
+        switch (TpsPlayerSettings.ReticleMode)
+        {
+            case ReticleStyle.Dot:
+                DrawTextureCentered(GetCircleTexture(), cx, cy, Mathf.Max(size, thickness + 2f));
+                break;
+            case ReticleStyle.Circle:
+                DrawTextureCentered(GetRingTexture(), cx, cy, Mathf.Max((gap + size) * 2f, 8f));
+                break;
+            case ReticleStyle.CircleDot:
+                DrawTextureCentered(GetRingTexture(), cx, cy, Mathf.Max((gap + size) * 2f, 8f));
+                DrawTextureCentered(GetCircleTexture(), cx, cy, Mathf.Max(thickness + 2f, 3f));
+                break;
+            default:
+                DrawCrosshairLines(cx, cy, gap, size, thickness);
+                break;
+        }
+
+        GUI.color = previous;
+    }
+
+    private void DrawCrosshairLines(float cx, float cy, float gap, float length, float thickness)
+    {
         GUI.DrawTexture(new Rect(cx - thickness * 0.5f, cy - gap - length, thickness, length), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(cx - thickness * 0.5f, cy + gap, thickness, length), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(cx - gap - length, cy - thickness * 0.5f, length, thickness), Texture2D.whiteTexture);
         GUI.DrawTexture(new Rect(cx + gap, cy - thickness * 0.5f, length, thickness), Texture2D.whiteTexture);
-        GUI.color = oldColor;
+    }
+
+    private void DrawTextureCentered(Texture2D texture, float cx, float cy, float size)
+    {
+        GUI.DrawTexture(new Rect(cx - size * 0.5f, cy - size * 0.5f, size, size), texture);
+    }
+
+    private static Texture2D GetCircleTexture()
+    {
+        if (circleTexture == null)
+        {
+            circleTexture = BuildCircleTexture(false);
+        }
+
+        return circleTexture;
+    }
+
+    private static Texture2D GetRingTexture()
+    {
+        if (ringTexture == null)
+        {
+            ringTexture = BuildCircleTexture(true);
+        }
+
+        return ringTexture;
+    }
+
+    private static Texture2D BuildCircleTexture(bool ring)
+    {
+        const int size = 64;
+        Texture2D texture = new Texture2D(size, size, TextureFormat.ARGB32, false);
+        texture.wrapMode = TextureWrapMode.Clamp;
+        texture.filterMode = FilterMode.Bilinear;
+        Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+        float radius = size * 0.42f;
+        float inner = size * 0.27f;
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float distance = Vector2.Distance(new Vector2(x, y), center);
+                float alpha = ring
+                    ? Mathf.Clamp01(radius - distance) * Mathf.Clamp01(distance - inner)
+                    : Mathf.Clamp01(radius - distance);
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        texture.Apply();
+        return texture;
     }
 
     private void DrawHitmarker()
@@ -179,6 +287,130 @@ public class TPSReticleHUD : MonoBehaviour
         GUI.contentColor = Color.white;
         GUI.Label(new Rect(32f, 62f, 636f, 480f), debugBuilder.ToString());
         GUI.contentColor = oldContentColor;
+    }
+
+    private void DrawSettingsPanel()
+    {
+        if (!TpsPlayerSettings.SettingsOpen)
+        {
+            return;
+        }
+
+        Rect panel = new Rect(
+            (Screen.width - SettingsPanelWidth) * 0.5f,
+            Mathf.Max(24f, (Screen.height - Mathf.Min(SettingsPanelHeight, Screen.height - 48f)) * 0.5f),
+            SettingsPanelWidth,
+            Mathf.Min(SettingsPanelHeight, Screen.height - 48f));
+
+        Color oldColor = GUI.color;
+        Color oldContentColor = GUI.contentColor;
+        GUI.color = new Color(0.03f, 0.035f, 0.04f, 0.92f);
+        GUI.Box(panel, GUIContent.none);
+        GUI.color = oldColor;
+        GUI.contentColor = Color.white;
+
+        GUILayout.BeginArea(new Rect(panel.x + 22f, panel.y + 18f, panel.width - 44f, panel.height - 36f));
+        settingsScroll = GUILayout.BeginScrollView(settingsScroll, false, true);
+        GUILayout.Label("Settings");
+        GUILayout.Space(8f);
+
+        GUILayout.Label("Aim Sensitivity");
+        DrawSliderSetting("Sensitivity", TpsPlayerSettings.LookSensitivity, 0.1f, 10f, TpsPlayerSettings.SetLookSensitivity);
+        DrawSliderSetting("ADS Sens", TpsPlayerSettings.AdsMultiplier, 0.1f, 2f, TpsPlayerSettings.SetAdsMultiplier);
+        DrawSliderSetting("Vertical", TpsPlayerSettings.VerticalRatio, 0.1f, 2f, TpsPlayerSettings.SetVerticalRatio);
+
+        GUILayout.Space(12f);
+        GUILayout.Label("Reticle");
+        GUILayout.BeginHorizontal();
+        DrawStyleButton("Cross", ReticleStyle.Crosshair);
+        DrawStyleButton("Dot", ReticleStyle.Dot);
+        DrawStyleButton("Circle", ReticleStyle.Circle);
+        DrawStyleButton("Circle+Dot", ReticleStyle.CircleDot);
+        GUILayout.EndHorizontal();
+
+        DrawSliderSetting("Size", TpsPlayerSettings.ReticleSize, 2f, 30f, TpsPlayerSettings.SetReticleSize);
+        DrawSliderSetting("Gap", TpsPlayerSettings.ReticleGap, 0f, 30f, TpsPlayerSettings.SetReticleGap);
+        DrawSliderSetting("Thickness", TpsPlayerSettings.ReticleThickness, 1f, 6f, TpsPlayerSettings.SetReticleThickness);
+        bool outline = GUILayout.Toggle(TpsPlayerSettings.ReticleOutline, "Outline");
+        if (outline != TpsPlayerSettings.ReticleOutline)
+        {
+            TpsPlayerSettings.SetReticleOutline(outline);
+        }
+
+        GUILayout.Space(6f);
+        GUILayout.Label("Color");
+        GUILayout.BeginHorizontal();
+        DrawColorButton("Green", new Color(0.15f, 1f, 0.55f, 0.95f));
+        DrawColorButton("Cyan", new Color(0.1f, 0.9f, 1f, 0.95f));
+        DrawColorButton("Pink", new Color(1f, 0.25f, 0.85f, 0.95f));
+        DrawColorButton("Yellow", new Color(1f, 0.9f, 0.15f, 0.95f));
+        DrawColorButton("White", new Color(1f, 1f, 1f, 0.95f));
+        GUILayout.EndHorizontal();
+
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Esc closes settings.");
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Reset Defaults", GUILayout.Height(30f)))
+        {
+            TpsPlayerSettings.ResetDefaults();
+        }
+
+        if (GUILayout.Button("Close", GUILayout.Height(30f)))
+        {
+            TpsPlayerSettings.SettingsOpen = false;
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.EndScrollView();
+        GUILayout.EndArea();
+
+        DrawReticlePreview(panel);
+        GUI.contentColor = oldContentColor;
+    }
+
+    private void DrawSliderSetting(string label, float value, float min, float max, Action<float> setter)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label($"{label}: {value:0.##}", GUILayout.Width(120f));
+        float next = GUILayout.HorizontalSlider(value, min, max, GUILayout.Width(230f));
+        GUILayout.EndHorizontal();
+        if (!Mathf.Approximately(next, value))
+        {
+            setter(next);
+        }
+    }
+
+    private void DrawStyleButton(string label, ReticleStyle style)
+    {
+        bool selected = TpsPlayerSettings.ReticleMode == style;
+        Color oldColor = GUI.color;
+        GUI.color = selected ? new Color(0.25f, 0.7f, 1f, 1f) : oldColor;
+        if (GUILayout.Button(label, GUILayout.Height(28f)))
+        {
+            TpsPlayerSettings.SetReticleStyle(style);
+        }
+        GUI.color = oldColor;
+    }
+
+    private void DrawColorButton(string label, Color color)
+    {
+        Color oldColor = GUI.color;
+        GUI.color = color;
+        if (GUILayout.Button(label, GUILayout.Height(28f)))
+        {
+            TpsPlayerSettings.SetReticleColor(color);
+        }
+        GUI.color = oldColor;
+    }
+
+    private void DrawReticlePreview(Rect panel)
+    {
+        float cx = panel.x + panel.width - 88f;
+        float cy = panel.y + 82f;
+        Color oldColor = GUI.color;
+        GUI.color = new Color(0.12f, 0.14f, 0.16f, 0.96f);
+        GUI.Box(new Rect(cx - 52f, cy - 52f, 104f, 104f), GUIContent.none);
+        GUI.color = oldColor;
+        DrawReticleShape(cx, cy, TpsPlayerSettings.ReticleGap, TpsPlayerSettings.ReticleSize, TpsPlayerSettings.ReticleThickness, TpsPlayerSettings.ReticleColor);
     }
 
     private void BuildMetricsText()
